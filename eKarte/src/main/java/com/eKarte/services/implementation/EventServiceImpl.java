@@ -98,7 +98,7 @@ public class EventServiceImpl implements EventService {
                 .eventPicture(event.getEventPicture())
                 .eventTicketNumber(event.getEventTicketNumber())
                 .eventDate(event.getEventDate())
-                .eventCategory(event.getEventCategory())
+              //  .eventCategory(event.getEventCategory())
                 .build();
         return eventDto;
     }
@@ -111,7 +111,7 @@ public class EventServiceImpl implements EventService {
                 .eventPicture(event.getEventPicture())
                 .eventTicketNumber(event.getEventTicketNumber())
                 .eventDate(event.getEventDate())
-                .eventCategory(event.getEventCategory())
+           //     .eventCategory(event.getEventCategory())
                 .build();
     }
 }
