@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Delete Event</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+
+<div class="container">
+    <h2>Delete Events</h2>
+
+    <div class="row">
+        <div class="col-md-4" th:each="event : ${events}">
+            <div class="card" style="width: 18rem; margin-bottom: 20px;">
+                <img th:src="${event.eventPicture}" class="card-img-top" alt="Event Image">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${event.eventName}"></h5>
+                    <p class="card-text" th:text="${event.eventInfo}"></p>
+                    <form th:action="@{/admin/deleteEvent/{eventId}(eventId=${event.eventId})}" method="post">
+                        <input type="hidden" name="eventId" th:value="${event.eventId}">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous">
+
+    <style>.gradient-custom-3 {
+        /* fallback for old browsers */
+        background: #84fab0;
+
+        /* Chrome 10-25, Safari 5.1-6 */
+        background: -webkit-linear-gradient(to right, rgba(132, 250, 176, 0.5), rgba(143, 211, 244, 0.5));
+
+        /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        background: linear-gradient(to right, #005eeb, #004ec1, #003d98, #002d71, #001e4c);
+    }
+    .gradient-custom-4 {
+        /* fallback for old browsers */
+        background: #84fab0;
+
+        /* Chrome 10-25, Safari 5.1-6 */
+        background: -webkit-linear-gradient(to right, rgba(132, 250, 176, 1), rgba(143, 211, 244, 1));
+
+        /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        background: linear-gradient(to right, #005eeb, #004ec1, #003d98, #002d71, #001e4c);
+    }
+
+    body{
+        height: 100vh;
+        background-repeat: no-repeat;
+        background-size: cover;
+        position: relative;
+    }
+    #overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+    }
+    .btn-success:not(:disabled):not(.disabled):active{
+        background-color: #001e4c;
+        border-color: black;
+    }
+
+    .btn-success{
+        background-color: #001e4c;
+        border-color: black;
+    }
+
+
+    </style>
+
+</head>
+<body
+      style="background-image: url('https://theseaport.nyc/wp-content/uploads/2022/04/NeedToBreatheTour-245-scaled.jpg');">
+<div id="overlay"></div>
+
+<div class="mask d-flex align-items-center h-100 ">
+    <div class="container h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+                <div class="card" style="border-radius: 15px;">
+                    <div class="card-body p-5">
+                        <h2 class="text-uppercase text-center mb-5">Registracija</h2>
+
+                        <form th:action="@{/register}" th:object="${registration}" method="post">
+
+                            <div class="form-outline mb-4">
+                                <input type="text" id="firstName" class="form-control form-control-lg"
+                                       th:field="*{firstName}" required placeholder="Ime"/>
+                                <label class="form-label" for="firstName">Ime</label>
+                            </div>
+                            <div class="form-outline mb-4">
+                                <input type="text" id="lastName" class="form-control form-control-lg"
+                                       th:field="*{lastName}" required placeholder="Prezime"/>
+                                <label class="form-label" for="lastName">Prezime</label>
+                            </div>
+
+                            <div class="form-outline mb-4">
+                                <input type="email" id="email" class="form-control form-control-lg"
+                                       th:field="*{email}" required placeholder="primjer@gmail.com"/>
+                                <label class="form-label" for="email">Email</label>
+                            </div>
+
+                            <div class="form-outline mb-4">
+                                <input type="password" id="password" class="form-control form-control-lg"
+                                       th:field="*{password}" required placeholder="Lozinka"/>
+                                <label class="form-label" for="password">Lozinka</label>
+                            </div>
+
+                            <div class="form-outline mb-4">
+                                <input type="password" id="confirmPassword" class="form-control form-control-lg"
+                                       th:field="*{confirmPassword}" required placeholder="Potvrdi lozinku"/>
+                                <label class="form-label" for="confirmPassword">Potvrdi lozinku</label>
+                            </div>
+
+                            <div class="d-flex justify-content-center">
+                                <button type="submit"
+                                        class="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Registrujte se
+                                </button>
+                            </div>
+
+                            <p class="text-center text-muted mt-5 mb-0">Već imaš korisnički račun? <a href="#!"
+                                                                                                    class="fw-bold text-body"><u>Prijavi se ovdje
+                                </u></a></p>
+
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JavaScript and dependencies -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+</body>
+</html>

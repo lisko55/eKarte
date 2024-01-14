@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      >
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title layout:title-pattern="$CONTENT_TITLE - LAYOUT_TITLE">eKarte</title>
+    <link rel="icon" type="image/x-icon" href="static/assets/favicon.ico" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+    <!-- Font Awesome icons (free version)-->
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Catamaran:100,200,300,400,500,600,700,800,900" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i" rel="stylesheet" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="static/css/styles.css" rel="stylesheet" />
+
+</head>
+<body id="page-top">
+
+<!-- Header-->
+<header class="masthead text-center text-white">
+    <div class="masthead-content">
+        <div class="container px-5">
+            <h1 class="masthead-heading mb-0">One Page Wonder</h1>
+            <h2 class="masthead-subheading mb-0">Will Rock Your Socks Off</h2>
+            <a class="btn btn-primary btn-xl rounded-pill mt-5" href="#scroll">Learn More</a>
+        </div>
+    </div>
+    <div class="bg-circle-1 bg-circle"></div>
+    <div class="bg-circle-2 bg-circle"></div>
+    <div class="bg-circle-3 bg-circle"></div>
+    <div class="bg-circle-4 bg-circle"></div>
+</header>
+<!-- Content section 1-->
+<section layout:fragment="body" th:each="event, iterStat : ${events}" th:id="'section-' + ${event.eventId}" class="user-section">
+    <div class="container px-5">
+        <div class="row gx-5 align-items-center">
+            <div class="col-lg-6 order-lg-2">
+                <div class="p-5">
+<!--                    &lt;!&ndash; Display Event Image &ndash;&gt;-->
+                    <img class="img-fluid rounded-circle" th:src="${event.eventPicture}" alt="Event Image" />
+                </div>
+            </div>
+            <div class="col-lg-6 order-lg-1">
+                <div class="p-5">
+                    &lt;!&ndash; Display Event Name &ndash;&gt;
+                    <h2 class="display-4" th:text="${event.eventName}">Default Text if Event Name is Null</h2>
+
+                    &lt;!&ndash; Display Event Date (Assuming eventDate is a property of EventDto) &ndash;&gt;
+<!--                    <p th:text="${#dates.format(event.eventDate, 'yyyy-MM-dd HH:mm:ss')}">Default Text if Event Date is Null</p>-->
+
+                    &lt;!&ndash; Button to Toggle Event Info &ndash;&gt;
+                    <button type="button" class="btn btn-primary" th:id="'btnShowEventInfo-' + ${event.eventId}" th:onclick="'toggleEventInfo(\'' + ${event.eventId} + '\')'">Show Event Info</button>
+
+                    &lt;!&ndash; Display Event Info Initially Hidden &ndash;&gt;
+                    <p th:id="'eventInfo-' + ${event.eventId}" style="display: none;" th:text="${event.eventInfo}">Default Text if Event Info is Null</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript to Toggle Event Info Visibility -->
+
+</body>
+</html>

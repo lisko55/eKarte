@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Update Events</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+
+<div class="container">
+  <h1>Update Events</h1>
+
+  <div class="row">
+    <!-- Display events in cards with update button -->
+    <div class="col-md-4" th:each="event : ${events}">
+      <div class="card" style="width: 18rem; margin-bottom: 20px;">
+        <img th:src="${event.eventPicture}" class="card-img-top" alt="Event Image">
+        <div class="card-body">
+          <h5 class="card-title" th:text="${event.eventName}"></h5>
+          <p class="card-text" th:text="${event.eventInfo}"></p>
+
+          <!-- Link to the update form for this event -->
+          <a th:href="@{'/admin/updateEvent/' + ${event.eventId}}" class="btn btn-primary">Update</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

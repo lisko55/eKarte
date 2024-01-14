@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Add Events</title>
+
+    <!-- Add date picker CSS and JS references -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!--<script>
+        $(function() {
+            $("#eventStartDate").datepicker({ dateFormat: 'yy-mm-dd' });
+            $("#eventEndDate").datepicker({ dateFormat: 'yy-mm-dd' });
+        });
+    </script>-->
+</head>
+<body>
+
+<h2>Update Events</h2>
+
+<h3>Update Event:</h3>
+<form th:action="@{/admin/updateEvent/{eventId}(eventId=${event.eventId})}" method="post" th:object="${event}">
+    <input type="hidden" th:field="*{eventId}">
+
+    <div>
+        <label for="eventName">Event Name:</label>
+        <input type="text" id="eventName" th:field="*{eventName}" required>
+    </div>
+
+    <div>
+        <label for="eventDate">Event Date:</label>
+        <input type="date" id="eventDate" th:field="*{eventDate}" required>
+        <!-- Date picker will be applied to this input field -->
+    </div>
+
+    <!--<div>
+        <label for="eventEndDate">Event End Date:</label>
+        <input type="date" id="eventEndDate" th:field="*{eventEndDate}" required>
+        &lt;!&ndash; Date picker will be applied to this input field &ndash;&gt;
+    </div>-->
+
+    <div>
+        <label for="eventTicketNumber">Event Ticket Number</label>
+        <input type="number" id="eventTicketNumber" th:field="*{eventTicketNumber}" required>
+    </div>
+
+    <div>
+        <label for="eventInfo">Event Info:</label>
+        <textarea id="eventInfo" th:field="*{eventInfo}" required></textarea>
+    </div>
+
+    <div>
+        <label for="eventPicture">Event Picture URL:</label>
+        <input type="text" id="eventPicture" th:field="*{eventPicture}" required>
+    </div>
+
+    <div>
+        <label for="eventCategory">Event Category:</label>
+        <select id="eventCategory" name="eventCategory" th:field="*{eventCategory}" required>
+            <option value="KONCERT">Concert</option>
+            <option value="SPORT">Sport</option>
+            <option value="FESTIVAL">Festival</option>
+            <option value="POZORIŠTE">Theater</option>
+        </select>
+    </div>
+
+
+    <button type="submit">Update Event</button>
+</form>
+
+</body>
+</html>
