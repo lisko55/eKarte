@@ -67,7 +67,6 @@ public class EventServiceImpl implements EventService {
                 existingEvent.setEventDate(eventDto.getEventDate());
             }
             if (eventDto.getEventCategory() != null) {
-// Assuming EventCategory is an enumeration type in both Event and EventDto classes
                 existingEvent.setEventCategory(Event.EventCategory.valueOf(eventDto.getEventCategory().name()));
             }
 
@@ -98,7 +97,7 @@ public class EventServiceImpl implements EventService {
                 .eventPicture(event.getEventPicture())
                 .eventTicketNumber(event.getEventTicketNumber())
                 .eventDate(event.getEventDate())
-              //  .eventCategory(event.getEventCategory())
+                .eventCategory(event.getEventCategory())
                 .build();
         return eventDto;
     }
@@ -111,7 +110,7 @@ public class EventServiceImpl implements EventService {
                 .eventPicture(event.getEventPicture())
                 .eventTicketNumber(event.getEventTicketNumber())
                 .eventDate(event.getEventDate())
-           //     .eventCategory(event.getEventCategory())
+                .eventCategory(event.getEventCategory())
                 .build();
     }
 }

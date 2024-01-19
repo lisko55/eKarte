@@ -21,7 +21,7 @@ public class EventDto {
     public enum EventCategory{
         KONCERT, SPORT, FESTIVAL, POZORIŠTE,
     }
-    private EventCategory eventCategory;
+    private Event.EventCategory eventCategory;
     private LocalDateTime eventCreateTime;
     private LocalDateTime eventUpdateTime;
 }

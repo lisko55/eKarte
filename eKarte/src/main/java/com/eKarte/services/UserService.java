@@ -9,4 +9,8 @@ public interface UserService {
 
     List<UserDto> findAllUsers();
     User saveUser(User user);
+
+    User findUserById(Integer userId);
+    boolean authenticateUser(String email, String password);
+    boolean registerUser(User user);
 }

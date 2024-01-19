@@ -4,6 +4,7 @@ import com.eKarte.dto.UserDto;
 
 import com.eKarte.models.User;
 import com.eKarte.services.UserService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -45,4 +46,12 @@ public class UserController {
 
         return "Registration";
     }
+
+    @PostMapping("/logout")
+    public String logoutUser(HttpSession session){
+        session.invalidate();
+        return "redirect:/home/";
+
+    }
+
 }
