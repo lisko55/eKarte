@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Update Events</title>
+  <title>Admin Update Events</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
 
   <style>
     body{
@@ -13,9 +12,30 @@
       background-repeat: no-repeat;
       background-size: cover;
     }
+    .container {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+    .card {
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .card img {
+      max-height: 200px;
+      object-fit: cover;
+    }
+    .card-body {
+      background: #f8f9fa;
+    }
+    .btn-primary {
+      border-radius: 20px;
+    }
   </style>
-
-
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -43,11 +63,9 @@
 </nav>
 <div class="container">
   <h1>Update Events</h1>
-
   <div class="row">
-    <!-- Display events in cards with update button -->
     <div class="col-md-4" th:each="event : ${events}">
-      <div class="card" style="width: 18rem; margin-bottom: 20px;">
+      <div class="card">
         <img th:src="${event.eventPicture}" class="card-img-top" alt="Event Image">
         <div class="card-body">
           <h5 class="card-title" th:text="${event.eventName}"></h5>
@@ -55,15 +73,11 @@
           <p class="card-text" th:text="${event.eventTicketNumber}"></p>
           <p class="card-text" th:text="${event.eventDate}"></p>
           <p class="card-text" th:text="${event.eventCategory}"></p>
-
-          <!-- Link to the update form for this event -->
           <a th:href="@{'/admin/updateEvent/' + ${event.eventId}}" class="btn btn-primary">Update</a>
         </div>
       </div>
     </div>
   </div>
-
 </div>
-
 </body>
 </html>

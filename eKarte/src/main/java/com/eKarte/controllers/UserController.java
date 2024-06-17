@@ -1,7 +1,6 @@
 package com.eKarte.controllers;
 
 import com.eKarte.dto.UserDto;
-
 import com.eKarte.models.User;
 import com.eKarte.services.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -15,7 +14,6 @@ import java.util.List;
 @Controller
 @CrossOrigin("*")
 @RequestMapping("")
-
 public class UserController {
 
     private final UserService userService;
@@ -24,7 +22,6 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
-
 
     @GetMapping("/")
     public String helloUserController(){
@@ -50,8 +47,6 @@ public class UserController {
     @PostMapping("/logout")
     public String logoutUser(HttpSession session){
         session.invalidate();
-        return "redirect:/home/";
-
+        return "redirect:/home";
     }
-
 }

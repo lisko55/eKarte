@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class LoginController {
 
     private final UserService userService;
-
     private final UserRepository userRepository;
 
     public LoginController(UserService userService, UserRepository userRepository) {
@@ -32,11 +31,7 @@ public class LoginController {
     public String loginUser(@ModelAttribute("user") User user, Model model, HttpSession session) {
         if (userService.authenticateUser(user.getEmail(), user.getPassword())) {
             User authenticatedUser = userRepository.findByEmail(user.getEmail()).orElseThrow();
-            session.setAttribute("email", authenticatedUser.getEmail());
-            session.setAttribute("firstName", authenticatedUser.getFirstName());
-            session.setAttribute("lastName", authenticatedUser.getLastName());
-            session.setAttribute("userid", authenticatedUser.getUserId());
-            session.setAttribute("role", authenticatedUser.getRole());
+            session.setAttribute("user", authenticatedUser);
             if (authenticatedUser.getRole().equals("admin")) {
                 return "redirect:/admin/dashboard";
             }
@@ -46,5 +41,4 @@ public class LoginController {
             return "login";
         }
     }
-
 }

@@ -3,7 +3,6 @@
 <head>
     <!-- Design by foolishdeveloper.com -->
     <title>Registracija</title>
-
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
@@ -57,7 +56,7 @@
         }
 
         form {
-            height: 690px;
+            height: 750px;
             width: 400px;
             background-color: rgba(255, 255, 255, 0.13);
             position: absolute;
@@ -122,37 +121,20 @@
             cursor: pointer;
         }
 
-        .social {
+        p.text-center {
             margin-top: 30px;
-            display: flex;
+            font-size: 14px;
         }
 
-        .social div {
-            background: red;
-            width: 150px;
-            border-radius: 3px;
-            padding: 5px 10px 10px 5px;
-            background-color: rgba(255, 255, 255, 0.27);
-            color: #eaf0fb;
-            text-align: center;
+        p.text-center a {
+            color: #23a2f6;
+            text-decoration: none;
         }
 
-        .social div:hover {
-            background-color: rgba(255, 255, 255, 0.47);
+        p.text-center a:hover {
+            text-decoration: underline;
         }
 
-        .social .go {
-            margin-left: 25px;
-        }
-
-        .social i {
-            margin-right: 4px;
-        }
-
-        /* Additional style for Confirm Password field */
-        .form-outline.confirm-password {
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -175,7 +157,7 @@
 
     <div class="form-outline mb-4">
         <label for="email">Email:</label>
-        <input type="text" id="email" name="email" class="form-control form-control-lg" required>
+        <input type="email" id="email" name="email" class="form-control form-control-lg" required>
     </div>
 
     <div class="form-outline mb-4">

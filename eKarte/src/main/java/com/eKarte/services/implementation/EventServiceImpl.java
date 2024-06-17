@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -37,7 +38,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Event getEventById(Integer eventId) {
-        return eventRepository.findById(eventId).orElse(null);    }
+        return eventRepository.findById(eventId).orElse(null);
+    }
 
     @Override
     public void deleteEventById(Integer eventId) {
@@ -89,17 +91,45 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private Event mapToEvent(EventDto event) {
-        Event eventDto = Event.builder()
-                .eventId(event.getEventId())
-                .eventName(event.getEventName())
-                .eventInfo(event.getEventInfo())
-                .eventPicture(event.getEventPicture())
-                .eventTicketNumber(event.getEventTicketNumber())
-                .eventDate(event.getEventDate())
-                .eventCategory(event.getEventCategory())
+    @Override
+    public List<EventDto> getFilteredAndSortedEvents(String category, String sortOrder) {
+        List<Event> events = eventRepository.findAll();
+
+        // Filter by category if category is provided
+        if (category != null && !category.trim().isEmpty()) {
+            events = events.stream()
+                    .filter(event -> event.getEventCategory().name().equalsIgnoreCase(category.trim()))
+                    .collect(Collectors.toList());
+        }
+
+        // Sort events based on sortOrder
+        if ("asc".equalsIgnoreCase(sortOrder)) {
+            events.sort(Comparator.comparing(Event::getEventDate));
+        } else if ("desc".equalsIgnoreCase(sortOrder)) {
+            events.sort(Comparator.comparing(Event::getEventDate).reversed());
+        } else {
+            // Handle invalid sortOrder or default case
+            // Assuming a default sorting behavior if sortOrder is not recognized
+            events.sort(Comparator.comparing(Event::getEventDate)); // Default to ascending
+        }
+
+        return events.stream()
+                .map(this::mapToEventDto)
+                .collect(Collectors.toList());
+    }
+
+
+    private Event mapToEvent(EventDto eventDto) {
+        Event event = Event.builder()
+                .eventId(eventDto.getEventId())
+                .eventName(eventDto.getEventName())
+                .eventInfo(eventDto.getEventInfo())
+                .eventPicture(eventDto.getEventPicture())
+                .eventTicketNumber(eventDto.getEventTicketNumber())
+                .eventDate(eventDto.getEventDate())
+                .eventCategory(Event.EventCategory.valueOf(eventDto.getEventCategory().name()))
                 .build();
-        return eventDto;
+        return event;
     }
 
     private EventDto mapToEventDto(Event event) {

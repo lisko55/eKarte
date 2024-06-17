@@ -13,8 +13,30 @@
             background-repeat: no-repeat;
             background-size: cover;
         }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .card img {
+            max-height: 200px;
+            object-fit: cover;
+        }
+        .card-body {
+            background: #f8f9fa;
+        }
+        .btn-danger {
+            border-radius: 20px;
+        }
     </style>
-
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -42,24 +64,21 @@
 </nav>
 <div class="container">
     <h2>Delete Events</h2>
-
     <div class="row">
         <div class="col-md-4" th:each="event : ${events}">
-            <div class="card" style="width: 18rem; margin-bottom: 20px;">
+            <div class="card">
                 <img th:src="${event.eventPicture}" class="card-img-top" alt="Event Image">
                 <div class="card-body">
                     <h5 class="card-title" th:text="${event.eventName}"></h5>
                     <p class="card-text" th:text="${event.eventInfo}"></p>
                     <form th:action="@{/admin/deleteEvent/{eventId}(eventId=${event.eventId})}" method="post">
                         <input type="hidden" name="eventId" th:value="${event.eventId}">
-                        <button type="submit" class="btn btn-danger">Delete</button>
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this event?')">Delete</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
-
 </body>
 </html>

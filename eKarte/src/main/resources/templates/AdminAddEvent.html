@@ -9,54 +9,40 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/jquery-3.6.4.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.4.slim.min.js" integrity="sha384-u8md/LZBquR+BkvyqM9S4PDfu5WEoB/6EJq71RHq4G2tU8KGbR3uyyE/hJQ9bZqN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-VE4S8tn1bhIb6cWn6zD0MGH6UPAnATPV2gGhj9pDC7iIzJYFK2QJFpCqgRBsA6YH" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            margin: 0px;
             background-image: url("https://www.centertool.hu/wp-content/uploads/2016/09/white-background-images-for-website-white-wallpapers-hd-2014-onlybackground-image.jpg");
             background-repeat: no-repeat;
             background-size: cover;
         }
         h2, h3 {
             color: #333;
+            text-align: center;
+            margin-top: 20px;
         }
-
-        form {
-            max-width: 500px;
-            margin: 0 auto;
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
         }
-
+        .form-group {
+            margin-bottom: 15px;
+        }
         label {
-            display: block;
-            margin-bottom: 5px;
+            font-weight: bold;
         }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        button {
+        .btn-primary {
             background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
         }
-
-        button:hover {
+        .btn-primary:hover {
             background-color: #45a049;
         }
-
     </style>
-
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -82,50 +68,41 @@
         </ul>
     </div>
 </nav>
-<h2>Add Events</h2>
-
-<h3>Add New Event:</h3>
-<form th:action="@{/admin/events}" method="post" th:object="${event}">
-    <div>
-        <label for="eventName">Event Name:</label>
-        <input type="text" id="eventName" th:field="*{eventName}" required>
-    </div>
-
-    <div>
-        <label for="eventDate">Event  Date:</label>
-        <input type="date" id="eventDate" th:field="*{eventDate}" required>
-    </div>
-
-
-    <div>
-        <label for="eventTicketNumber">Event Ticket Number</label>
-        <input type="number" id="eventTicketNumber" th:field="*{eventTicketNumber}" required>
-    </div>
-
-    <div>
-        <label for="eventInfo">Event Info:</label>
-        <textarea id="eventInfo" th:field="*{eventInfo}" required></textarea>
-    </div>
-
-    <div>
-        <label for="eventPicture">Event Picture URL:</label>
-        <input type="text" id="eventPicture" th:field="*{eventPicture}" required>
-    </div>
-
-
-    <div>
-        <label for="eventCategory">Event Category:</label>
-        <select id="eventCategory" th:field="*{eventCategory}" required>
-            <option value="KONCERT">Concert</option>
-            <option value="SPORT">Sport</option>
-            <option value="FESTIVAL">Festival</option>
-            <option value="POZORIŠTE">Theater</option>
-        </select>
-    </div>
-
-    <button type="submit">Add Event</button>
-</form>
-
-
+<div class="container">
+    <h2>Add Events</h2>
+    <h3>Add New Event:</h3>
+    <form th:action="@{/admin/events}" method="post" th:object="${event}">
+        <div class="form-group">
+            <label for="eventName">Event Name:</label>
+            <input type="text" id="eventName" class="form-control" th:field="*{eventName}" required>
+        </div>
+        <div class="form-group">
+            <label for="eventDate">Event Date:</label>
+            <input type="date" id="eventDate" class="form-control" th:field="*{eventDate}" required>
+        </div>
+        <div class="form-group">
+            <label for="eventTicketNumber">Event Ticket Number:</label>
+            <input type="number" id="eventTicketNumber" class="form-control" th:field="*{eventTicketNumber}" required>
+        </div>
+        <div class="form-group">
+            <label for="eventInfo">Event Info:</label>
+            <textarea id="eventInfo" class="form-control" th:field="*{eventInfo}" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="eventPicture">Event Picture URL:</label>
+            <input type="text" id="eventPicture" class="form-control" th:field="*{eventPicture}" required>
+        </div>
+        <div class="form-group">
+            <label for="eventCategory">Event Category:</label>
+            <select id="eventCategory" class="form-control" th:field="*{eventCategory}" required>
+                <option value="KONCERT">Concert</option>
+                <option value="SPORT">Sport</option>
+                <option value="FESTIVAL">Festival</option>
+                <option value="POZORIŠTE">Theater</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Event</button>
+    </form>
+</div>
 </body>
 </html>

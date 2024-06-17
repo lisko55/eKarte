@@ -24,37 +24,31 @@ public class RegistrationController {
         this.userService = userService;
     }
 
-
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
         model.addAttribute("registration", new Registration());
         return "registration";
     }
 
-
     @PostMapping("/register")
     public String registerUser(@ModelAttribute("registration") @Valid Registration registration,
                                BindingResult bindingResult, Model model) {
 
-        // Check for validation errors in the registration form
         if (bindingResult.hasErrors()) {
             return "registration";
         }
 
-        // Check if passwords match
         if (!registration.getPassword().equals(registration.getConfirmPassword())) {
-            // Add an error to the bindingResult for confirmPassword field
             bindingResult.rejectValue("confirmPassword", "error.registration", "Passwords do not match");
             return "registration";
         }
 
-        // Create a User entity from the registration form
         User user = User.builder()
                 .firstName(registration.getFirstName())
                 .lastName(registration.getLastName())
                 .email(registration.getEmail())
                 .password(registration.getPassword())
-                .confirmPassword(registration.getConfirmPassword()) // Set confirmPassword here
+                .confirmPassword(registration.getConfirmPassword())
                 .role("user")
                 .build();
 
@@ -64,9 +58,4 @@ public class RegistrationController {
             return "redirect:/login";
         }
     }
-
-
-
-
 }
-
