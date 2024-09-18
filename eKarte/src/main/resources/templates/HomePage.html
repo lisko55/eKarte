@@ -107,20 +107,22 @@
                     <a class="nav-link" href="/home">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/about">About</a>
+                    <a class="nav-link" href="/home">About</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/shop">Shop</a>
+                    <a class="nav-link" href="/home">Shop</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/contact">Contact</a>
+                    <a class="nav-link" href="/home">Contact</a>
                 </li>
+                <li class="nav-item" th:if="${session.user != null and session.user.role == 'admin'}">
+                    <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                </li>
+
             </ul>
+
             <div class="navbar-nav ms-lg-3 d-flex align-items-center">
-                <a class="nav-icon d-none d-lg-inline me-3" href="#" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="fa fa-fw fa-search"></i></a>
-                <a class="nav-icon position-relative me-3" href="#"><i class="fa fa-fw fa-cart-arrow-down"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-light">7</span></a>
-                <a class="nav-icon position-relative me-3" href="#"><i class="fa fa-fw fa-user"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-light">+99</span></a>
-                <div class="welcome-user">
+                 <div class="welcome-user">
                     <div th:if="${session['user'] == null}">
                         <form action="/login" method="get" class="d-inline">
                             <button type="submit" class="btn btn-outline-dark me-2">Login</button>
@@ -145,7 +147,6 @@
     <div class="container px-4 px-lg-5">
         <h1 class="fw-bolder">Welcome to eKarte</h1>
         <p class="lead">Your one-stop shop for all your needs</p>
-        <a class="btn btn-lg btn-light" href="/shop">Start Shopping</a>
     </div>
 </header>
 
