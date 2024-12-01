@@ -12,11 +12,14 @@
                 <h5 class="card-title" th:text="${event.eventName}">Event Name</h5>
                 <h6 style="font-style: italic" th:text="${event.eventCategory}"></h6>
                 <h6 style="font-style: italic" th:text="${event.eventDate}"></h6>
-                <button type="button" class="btn btn-primary" th:id="'btnShowEventInfo-' + ${event.eventId}" th:onclick="'toggleEventInfo(' + ${event.eventId} + ')'">Show Event Info</button>
+                <button type="button" class="btn btn-primary" th:id="'btnCart' + ${event.eventId}">Buy</button>
+                <span>aaaa</span>
+                <button type="button" class="btn btn-primary" th:id="'btnShowEventInfo-' + ${event.eventId}" th:onclick="'toggleEventInfo(' + ${event.eventId} + ')'">S2how Event Info</button>
+
                 <p th:id="'eventInfo-' + ${event.eventId}" style="display: none;" th:text="${event.eventInfo}">Event Info</p>
             </div>
         </div>
-        <div class="w-100 d-none d-md-block d-lg-none" th:if="${stat.index % 3 == 2}"></div> <!-- Force new row after every 3 cards on md and up -->
+        <div class="w-100 d-none d-md-block d-lg-none" th:if="${stat.index % 3 == 2}"></div>
     </div>
 </div>
 </body>

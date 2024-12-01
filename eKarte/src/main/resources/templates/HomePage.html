@@ -146,13 +146,12 @@
 <header class="header">
     <div class="container px-4 px-lg-5">
         <h1 class="fw-bolder">Welcome to eKarte</h1>
-        <p class="lead">Your one-stop shop for all your needs</p>
+        <p class="lead">You</p>
     </div>
 </header>
 
 <section class="py-5">
     <div class="container px-4 px-lg-5">
-        <!-- Filter and Sort Controls -->
         <div class="row mb-4">
             <div class="col-md-6">
                 <select id="categoryFilter" class="form-select" aria-label="Category Filter">
@@ -207,7 +206,6 @@
         }
     }
 
-    // Filter and sort functionality
     $(document).ready(function() {
         $('#categoryFilter').change(function() {
             filterAndSortEvents();
