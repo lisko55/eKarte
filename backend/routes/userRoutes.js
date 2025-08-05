@@ -1,7 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
-const { registerUser, loginUser } = require("../controllers/userController");
+const { protect, authorize } = require("../middleware/authMiddleware");
+const {
+  registerUser,
+  loginUser,
+  getUsers,
+  updateUser,
+  updateUserProfile,
+} = require("../controllers/userController");
 
 const phoneRegex = /^(\+)?([0-9\s\-\(\)]{9,15})$/;
 
@@ -37,5 +44,12 @@ router.post(
   ],
   loginUser
 );
+router.route("/profile").put(protect, updateUserProfile);
+router
+  .route("/")
+  .post(registerUser)
+  .get(protect, authorize("superadmin", "admin"), getUsers);
+
+router.route("/:id").put(protect, authorize("superadmin"), updateUser);
 
 module.exports = router;

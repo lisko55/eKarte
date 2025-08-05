@@ -64,12 +64,27 @@ const createEvent = async (req, res) => {
 
 const getEvents = async (req, res) => {
   try {
-    const events = await Event.find({})
+    const keyword = req.query.keyword
+      ? {
+          title: {
+            $regex: req.query.keyword,
+            $options: "i",
+          },
+        }
+      : {};
+
+    const category = req.query.category
+      ? {
+          category: req.query.category,
+        }
+      : {};
+
+    const events = await Event.find({ ...keyword, ...category })
       .populate("seller", "name email")
       .sort({ date: 1 });
+
     res.json(events);
   } catch (error) {
-    console.error("Greška u getEvents:", error);
     res.status(500).json({ message: "Greška na serveru" });
   }
 };
@@ -92,8 +107,64 @@ const getEventById = async (req, res) => {
   }
 };
 
+const updateEvent = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (event) {
+      // Pristupamo podacima direktno iz req.body
+      event.title = req.body.title || event.title;
+      event.description = req.body.description || event.description;
+      event.date = req.body.date || event.date;
+      event.location = req.body.location || event.location;
+      event.category = req.body.category || event.category;
+
+      if (req.body.ticketTypes && typeof req.body.ticketTypes === "string") {
+        event.ticketTypes = JSON.parse(req.body.ticketTypes);
+      }
+
+      if (req.file) {
+        event.image = `/${req.file.path.replace(/\\/g, "/")}`;
+      } else if (req.body.image) {
+        event.image = req.body.image;
+      }
+
+      const updatedEvent = await event.save();
+      res.json(updatedEvent);
+    } else {
+      res.status(404).json({ message: "Događaj nije pronađen" });
+    }
+  } catch (error) {
+    console.error("--- GREŠKA U updateEvent ---", error);
+    res
+      .status(400)
+      .json({
+        message: "Greška pri ažuriranju događaja",
+        error: error.message,
+      });
+  }
+};
+const deleteEvent = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (event) {
+      await Event.deleteOne({ _id: event._id });
+      res.json({ message: "Događaj uspješno obrisan" });
+    } else {
+      res.status(404).json({ message: "Događaj nije pronađen" });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Greška na serveru", error: error.message });
+  }
+};
+
 module.exports = {
   createEvent,
   getEvents,
   getEventById,
+  updateEvent,
+  deleteEvent,
 };

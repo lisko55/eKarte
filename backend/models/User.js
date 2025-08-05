@@ -43,10 +43,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isAdmin: {
-      type: Boolean,
-      required: true,
-      default: false,
+    role: {
+      type: String,
+      enum: ["user", "admin", "superadmin"],
+      default: "user",
     },
 
     cart: [CartItemSchema],

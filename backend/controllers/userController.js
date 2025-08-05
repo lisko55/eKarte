@@ -40,7 +40,7 @@ const registerUser = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         phone: user.phone,
-        isAdmin: user.isAdmin,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -72,11 +72,7 @@ const loginUser = async (req, res) => {
         .json({ errors: [{ msg: "Neispravni podaci za prijavu" }] });
     }
 
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
+    const payload = { user: { id: user.id } };
 
     jwt.sign(
       payload,
@@ -90,18 +86,112 @@ const loginUser = async (req, res) => {
             id: user.id,
             name: user.name,
             email: user.email,
-            isAdmin: user.isAdmin,
+            role: user.role,
           },
         });
       }
     );
   } catch (error) {
-    console.error(error.message);
+    console.error("GREŠKA U loginUser:", error);
     res.status(500).send("Greška na serveru");
+  }
+};
+
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Greška na serveru" });
+  }
+};
+
+const updateUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+      if (req.params.id === req.user.id) {
+        return res
+          .status(400)
+          .json({ message: "Ne možete mijenjati vlastitu ulogu." });
+      }
+      if (user.role === "superadmin") {
+        return res
+          .status(403)
+          .json({ message: "Ne možete mijenjati ulogu drugog Super Admina." });
+      }
+      user.name = req.body.name || user.name;
+      user.lastName = req.body.lastName || user.lastName;
+      user.email = req.body.email || user.email;
+      user.role = req.body.role || user.role;
+
+      const updatedUser = await user.save();
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+      });
+    } else {
+      res.status(404).json({ message: "Korisnik nije pronađen" });
+    }
+  } catch (error) {
+    res.status(400).json({
+      message: "Greška pri ažuriranju korisnika",
+      error: error.message,
+    });
+  }
+};
+
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.lastName = req.body.lastName || user.lastName;
+      user.email = req.body.email || user.email;
+      user.phone = req.body.phone || user.phone;
+
+      if (req.body.password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(req.body.password, salt);
+      }
+
+      const updatedUser = await user.save();
+
+      const payload = { user: { id: updatedUser.id } };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "5h",
+      });
+
+      res.json({
+        token,
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          role: updatedUser.role,
+        },
+      });
+    } else {
+      res.status(404).json({ message: "Korisnik nije pronađen" });
+    }
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Greška pri ažuriranju profila", error: error.message });
   }
 };
 
 module.exports = {
   registerUser,
   loginUser,
+  getUsers,
+  updateUser,
+  updateUserProfile,
 };

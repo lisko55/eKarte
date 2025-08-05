@@ -6,8 +6,10 @@ const {
   createEvent,
   getEvents,
   getEventById,
+  updateEvent,
+  deleteEvent,
 } = require("../controllers/eventController");
-const { protect, admin } = require("../middleware/authMiddleware");
+const { protect, authorize } = require("../middleware/authMiddleware");
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
@@ -39,7 +41,28 @@ const upload = multer({
 
 router.get("/", getEvents);
 
-router.post("/", protect, admin, createEvent);
+router.post("/", protect, authorize("superadmin", "admin"), createEvent);
 router.get("/:id", getEventById);
+
+router
+  .route("/")
+  .get(getEvents)
+  .post(
+    protect,
+    authorize("superadmin", "admin"),
+    upload.single("image"),
+    createEvent
+  );
+
+router
+  .route("/:id")
+  .get(getEventById)
+  .put(
+    protect,
+    authorize("superadmin", "admin"),
+    upload.single("image"),
+    updateEvent
+  )
+  .delete(protect, authorize("superadmin", "admin"), deleteEvent);
 
 module.exports = router;

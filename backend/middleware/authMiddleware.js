@@ -26,14 +26,15 @@ const protect = async (req, res, next) => {
   }
 };
 
-const admin = (req, res, next) => {
-  if (req.user && req.user.isAdmin) {
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: `Pristup odbijen. Vaša uloga (${req.user.role}) nema ovlasti za ovu akciju.`,
+      });
+    }
     next();
-  } else {
-    res.status(401).json({
-      message: "Pristup odbijen. Potrebne su administratorske ovlasti.",
-    });
-  }
+  };
 };
 
-module.exports = { protect, admin };
+module.exports = { protect, authorize };

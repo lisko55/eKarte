@@ -178,8 +178,23 @@ const getMyOrders = async (req, res) => {
     res.status(500).json({ message: "Greška na serveru" });
   }
 };
+
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({})
+      .populate("user", "id name")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    console.error("--- GREŠKA U getAllOrders ---", error);
+    res.status(500).json({ message: "Greška na serveru" });
+  }
+};
+
 module.exports = {
   createPaymentIntent,
   addOrderItems,
   getMyOrders,
+  getAllOrders,
 };
