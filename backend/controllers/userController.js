@@ -2,15 +2,15 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 
 const registerUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
   const { name, lastName, email, password, phone } = req.body;
-
   try {
     let user = await User.findOne({ email });
     if (user) {
@@ -18,34 +18,63 @@ const registerUser = async (req, res) => {
         .status(400)
         .json({ errors: [{ msg: "Korisnik s ovim emailom već postoji" }] });
     }
-
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
+    const verificationToken = crypto.randomBytes(32).toString("hex");
     user = new User({
       name,
       lastName,
       email,
       password: hashedPassword,
       phone,
+      verificationToken,
     });
-
     await user.save();
 
+    const verificationUrl = `${process.env.BACKEND_URL}/api/users/verify-email?token=${verificationToken}`;
+    const message = `<h1>Potvrda Email Adrese</h1><p>Molimo kliknite na sljedeći link da biste aktivirali svoj račun:</p><a href="${verificationUrl}">${verificationUrl}</a>`;
+    await sendEmail({
+      email: user.email,
+      subject: "Aktivacija računa - eKarte",
+      message,
+    });
+
     res.status(201).json({
-      message: "Korisnik uspješno registriran!",
-      user: {
-        _id: user.id,
-        name: user.name,
-        lastName: user.lastName,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
+      message:
+        "Registracija uspješna! Molimo provjerite vaš email za aktivacijski link.",
     });
   } catch (error) {
     console.error("GREŠKA U registerUser:", error);
     res.status(500).send("Greška na serveru");
+  }
+};
+
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).send(`... Greška ...`);
+    }
+
+    const user = await User.findOne({ verificationToken: token });
+
+    if (!user) {
+      return res.status(400).send(`
+        <div style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+          <h1>Link je neispravan</h1>
+          <p>Verifikacijski link je neispravan ili je već iskorišten. Molimo pokušajte se prijaviti.</p>
+          <a href="${process.env.FRONTEND_URL}/login">Idi na Prijavu</a>
+        </div>
+      `);
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+  } catch (error) {
+    res.status(500).send("<h1>Greška na serveru</h1>");
   }
 };
 
@@ -54,9 +83,7 @@ const loginUser = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
   const { email, password } = req.body;
-
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -64,16 +91,18 @@ const loginUser = async (req, res) => {
         .status(400)
         .json({ errors: [{ msg: "Neispravni podaci za prijavu" }] });
     }
-
+    if (!user.isVerified) {
+      return res.status(401).json({
+        errors: [{ msg: "Vaš račun nije aktiviran. Molimo provjerite email." }],
+      });
+    }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res
         .status(400)
         .json({ errors: [{ msg: "Neispravni podaci za prijavu" }] });
     }
-
     const payload = { user: { id: user.id } };
-
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
@@ -85,7 +114,9 @@ const loginUser = async (req, res) => {
           user: {
             id: user.id,
             name: user.name,
+            lastName: user.lastName,
             email: user.email,
+            phone: user.phone,
             role: user.role,
           },
         });
@@ -96,11 +127,22 @@ const loginUser = async (req, res) => {
     res.status(500).send("Greška na serveru");
   }
 };
-
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select("-password");
-    res.json(users);
+    const pageSize = 10;
+    const page = Number(req.query.pageNumber) || 1;
+
+    const count = await User.countDocuments({});
+    const users = await User.find({})
+      .limit(pageSize)
+      .skip(pageSize * (page - 1))
+      .select("-password");
+
+    res.json({
+      users,
+      page,
+      pages: Math.ceil(count / pageSize),
+    });
   } catch (error) {
     res.status(500).json({ message: "Greška na serveru" });
   }
@@ -194,4 +236,5 @@ module.exports = {
   getUsers,
   updateUser,
   updateUserProfile,
+  verifyEmail,
 };

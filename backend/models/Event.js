@@ -28,17 +28,16 @@ const EventSchema = new mongoose.Schema(
     location: { type: String, required: true },
     category: {
       type: String,
-      enum: ["Muzika", "Sport", "Kazalište", "Film", "Ostalo"],
+      enum: ["Muzika", "Sport", "Pozorište", "Film", "Ostalo"],
       required: true,
     },
     image: { type: String, required: true },
 
     ticketTypes: [TicketTypeSchema],
 
-    seller: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: "User",
+    organizer: {
+      type: String,
+      required: [true, "Ime organizatora je obavezno"],
     },
   },
   {

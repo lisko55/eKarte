@@ -8,9 +8,8 @@ const {
   getUsers,
   updateUser,
   updateUserProfile,
+  verifyEmail,
 } = require("../controllers/userController");
-
-const phoneRegex = /^(\+)?([0-9\s\-\(\)]{9,15})$/;
 
 router.post(
   "/register",
@@ -18,11 +17,7 @@ router.post(
     body("name", "Ime je obavezno").not().isEmpty(),
     body("lastName", "Prezime je obavezno").not().isEmpty(),
     body("email", "Molimo unesite ispravan email").isEmail(),
-
-    body("phone")
-      .matches(phoneRegex)
-      .withMessage("Broj telefona nije u ispravnom formatu"),
-
+    body("phone", "Broj telefona je obavezan").not().isEmpty(),
     body("password", "Lozinka mora imati najmanje 6 znakova").isLength({
       min: 6,
     }),
@@ -44,12 +39,13 @@ router.post(
   ],
   loginUser
 );
-router.route("/profile").put(protect, updateUserProfile);
-router
-  .route("/")
-  .post(registerUser)
-  .get(protect, authorize("superadmin", "admin"), getUsers);
 
-router.route("/:id").put(protect, authorize("superadmin"), updateUser);
+router.get("/verify-email", verifyEmail);
+
+router.put("/profile", protect, updateUserProfile);
+
+router.get("/", protect, authorize("admin", "superadmin"), getUsers);
+
+router.put("/:id", protect, authorize("superadmin"), updateUser);
 
 module.exports = router;

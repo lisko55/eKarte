@@ -48,7 +48,7 @@ const createEvent = async (req, res) => {
       category,
       image: imagePath,
       ticketTypes: ticketTypes,
-      seller: req.user.id,
+      organizer: req.body,
     });
 
     const createdEvent = await event.save();
@@ -64,26 +64,23 @@ const createEvent = async (req, res) => {
 
 const getEvents = async (req, res) => {
   try {
+    const pageSize = 10;
+    const page = Number(req.query.pageNumber) || 1;
+
     const keyword = req.query.keyword
-      ? {
-          title: {
-            $regex: req.query.keyword,
-            $options: "i",
-          },
-        }
+      ? { title: { $regex: req.query.keyword, $options: "i" } }
       : {};
+    const category = req.query.category ? { category: req.query.category } : {};
 
-    const category = req.query.category
-      ? {
-          category: req.query.category,
-        }
-      : {};
+    const query = { ...keyword, ...category };
 
-    const events = await Event.find({ ...keyword, ...category })
-      .populate("seller", "name email")
+    const count = await Event.countDocuments(query);
+    const events = await Event.find(query)
+      .limit(pageSize)
+      .skip(pageSize * (page - 1))
       .sort({ date: 1 });
 
-    res.json(events);
+    res.json({ events, page, pages: Math.ceil(count / pageSize) });
   } catch (error) {
     res.status(500).json({ message: "Greška na serveru" });
   }
@@ -92,7 +89,7 @@ const getEvents = async (req, res) => {
 const getEventById = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id).populate(
-      "seller",
+      "organizer",
       "name email"
     );
 
@@ -112,12 +109,12 @@ const updateEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
 
     if (event) {
-      // Pristupamo podacima direktno iz req.body
       event.title = req.body.title || event.title;
       event.description = req.body.description || event.description;
       event.date = req.body.date || event.date;
       event.location = req.body.location || event.location;
       event.category = req.body.category || event.category;
+      event.organizer = req.body.organizer || event.organizer;
 
       if (req.body.ticketTypes && typeof req.body.ticketTypes === "string") {
         event.ticketTypes = JSON.parse(req.body.ticketTypes);
@@ -136,12 +133,10 @@ const updateEvent = async (req, res) => {
     }
   } catch (error) {
     console.error("--- GREŠKA U updateEvent ---", error);
-    res
-      .status(400)
-      .json({
-        message: "Greška pri ažuriranju događaja",
-        error: error.message,
-      });
+    res.status(400).json({
+      message: "Greška pri ažuriranju događaja",
+      error: error.message,
+    });
   }
 };
 const deleteEvent = async (req, res) => {

@@ -181,13 +181,48 @@ const getMyOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
+    const pageSize = 10;
+    const page = Number(req.query.pageNumber) || 1;
+
+    const count = await Order.countDocuments({});
     const orders = await Order.find({})
       .populate("user", "id name")
+      .limit(pageSize)
+      .skip(pageSize * (page - 1))
       .sort({ createdAt: -1 });
 
-    res.json(orders);
+    res.json({ orders, page, pages: Math.ceil(count / pageSize) });
   } catch (error) {
-    console.error("--- GREŠKA U getAllOrders ---", error);
+    console.error("Greška pri dohvaćanju svih narudžbi:", error);
+    res.status(500).json({ message: "Greška na serveru" });
+  }
+};
+
+const getOrderById = async (req, res) => {
+  try {
+    // Popunjavamo narudžbu s podacima o korisniku (ime i email)
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "name email"
+    );
+
+    if (order) {
+      // Sigurnosna provjera: da li je prijavljeni korisnik vlasnik narudžbe ILI je admin
+      if (
+        order.user._id.toString() !== req.user.id &&
+        req.user.role !== "admin" &&
+        req.user.role !== "superadmin"
+      ) {
+        return res
+          .status(401)
+          .json({ message: "Niste autorizirani za pregled ove narudžbe" });
+      }
+      res.json(order);
+    } else {
+      res.status(404).json({ message: "Narudžba nije pronađena" });
+    }
+  } catch (error) {
+    console.error("Greška pri dohvaćanju narudžbe po ID-u:", error);
     res.status(500).json({ message: "Greška na serveru" });
   }
 };
@@ -197,4 +232,5 @@ module.exports = {
   addOrderItems,
   getMyOrders,
   getAllOrders,
+  getOrderById,
 };
