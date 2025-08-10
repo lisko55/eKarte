@@ -230,6 +230,113 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  let user;
+  try {
+    user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      return res
+        .status(200)
+        .json({ message: "Link za resetiranje je poslan." });
+    }
+
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `http://localhost:3000/resetpassword/${resetToken}`;
+
+    const message = `
+      <h1>Zahtjev za Resetiranje Lozinke</h1>
+      <p>Molimo kliknite na link ispod da postavite novu lozinku.</p>
+      <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+      <p>Ovaj link ističe za 10 minuta.</p>
+    `;
+
+    await sendEmail({
+      email: user.email,
+      subject: "Resetiranje Lozinke - eKarte",
+      message,
+    });
+
+    res
+      .status(200)
+      .json({ message: "Email za resetiranje lozinke je poslan." });
+  } catch (error) {
+    console.error("GREŠKA U forgotPassword:", error);
+
+    if (user) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+    }
+
+    res.status(500).json({ message: "Došlo je do greške pri slanju emaila." });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const resetToken = req.params.resettoken;
+
+    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+
+    const user = await User.findOne({
+      _id: decoded.id,
+      resetPasswordToken: resetToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Nevažeći ili istekao token za resetiranje." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Lozinka uspješno promijenjena." });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Nevažeći ili istekao token za resetiranje." });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "Korisnik nije pronađen" });
+    }
+
+    if (
+      req.user.role !== "admin" &&
+      req.user.role !== "superadmin" &&
+      req.user._id.toString() !== user._id.toString()
+    ) {
+      return res
+        .status(401)
+        .json({ message: "Niste autorizirani za ovu akciju" });
+    }
+
+    if (user.role === "superadmin") {
+      return res
+        .status(400)
+        .json({ message: "Nije moguće obrisati Super Admina." });
+    }
+
+    await User.deleteOne({ _id: req.params.id });
+    res.json({ message: "Korisnik uspješno obrisan" });
+  } catch (error) {
+    res.status(500).json({ message: "Greška na serveru" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -237,4 +344,7 @@ module.exports = {
   updateUser,
   updateUserProfile,
   verifyEmail,
+  forgotPassword,
+  resetPassword,
+  deleteUser,
 };

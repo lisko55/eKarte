@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 
 const CartItemSchema = new mongoose.Schema(
   {
@@ -56,10 +57,27 @@ const UserSchema = new mongoose.Schema(
       type: String,
     },
     cart: [CartItemSchema],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
+
   {
     timestamps: true,
   }
 );
+UserSchema.methods.getResetPasswordToken = function () {
+  const payload = {
+    id: this._id,
+    random: Math.random(),
+  };
 
+  const resetToken = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "10m",
+  });
+
+  this.resetPasswordToken = resetToken;
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minuta
+
+  return resetToken;
+};
 module.exports = mongoose.model("User", UserSchema);

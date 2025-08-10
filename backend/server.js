@@ -1,4 +1,3 @@
-// server/server.js
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -8,13 +7,11 @@ const dotenv = require("dotenv");
 
 const app = express();
 
-// Middleware
 app.use(cors());
-app.use(express.json()); // Omogućava parsiranje JSON podataka iz body-a zahtjeva
+app.use(express.json());
 
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
-// Konekcija na bazu
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
@@ -23,7 +20,6 @@ mongoose
   .then(() => console.log("MongoDB Connected..."))
   .catch((err) => console.log(err));
 
-// Testna ruta
 app.get("/api/test", (req, res) => {
   res.json({ message: "Pozdrav sa servera! Backend radi!" });
 });
@@ -37,3 +33,4 @@ app.use("/api/users", userRoutes);
 app.use("/api/events", require("./routes/eventRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));

@@ -9,6 +9,9 @@ const {
   updateUser,
   updateUserProfile,
   verifyEmail,
+  forgotPassword,
+  resetPassword,
+  deleteUser,
 } = require("../controllers/userController");
 
 router.post(
@@ -47,5 +50,11 @@ router.put("/profile", protect, updateUserProfile);
 router.get("/", protect, authorize("admin", "superadmin"), getUsers);
 
 router.put("/:id", protect, authorize("superadmin"), updateUser);
+
+router.post("/forgotpassword", forgotPassword);
+
+router.put("/resetpassword/:resettoken", resetPassword);
+
+router.route("/:id").delete(protect, authorize("superadmin"), deleteUser);
 
 module.exports = router;

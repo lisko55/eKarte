@@ -112,8 +112,20 @@ const removeFromCart = async (req, res) => {
   }
 };
 
+const clearCart = async (req, res) => {
+  try {
+    await User.updateOne({ _id: req.user.id }, { $set: { cart: [] } });
+    res.status(200).json({ message: "Košarica ispražnjena." });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Greška na serveru", error: error.message });
+  }
+};
+
 module.exports = {
   addToCart,
   getCart,
   removeFromCart,
+  clearCart,
 };
