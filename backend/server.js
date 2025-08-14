@@ -34,3 +34,4 @@ app.use("/api/events", require("./routes/eventRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
+app.use("/api/favorites", require("./routes/favoriteRoutes"));

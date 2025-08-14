@@ -4,38 +4,75 @@ const Order = require("../models/Order");
 
 const getStats = async (req, res) => {
   try {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
     const [
       userCount,
-      eventCount,
-      orderCount,
+      newUsersThisMonth,
+      activeEventCount,
       totalSalesData,
-      recentUsers,
-      recentOrders,
+      topSellingEvents,
+      monthlySales,
     ] = await Promise.all([
       User.countDocuments({}),
-      Event.countDocuments({}),
-      Order.countDocuments({}),
+
+      User.countDocuments({ createdAt: { $gte: firstDayOfMonth } }),
+
+      Event.countDocuments({ date: { $gte: today } }),
+
       Order.aggregate([
         { $group: { _id: null, total: { $sum: "$totalPrice" } } },
       ]),
 
-      User.find({}).sort({ createdAt: -1 }).limit(5).select("name createdAt"),
+      Order.aggregate([
+        { $unwind: "$orderItems" },
+        {
+          $group: {
+            _id: "$orderItems.event",
+            totalTicketsSold: { $sum: "$orderItems.quantity" },
+          },
+        },
+        { $sort: { totalTicketsSold: -1 } },
+        { $limit: 5 },
 
-      Order.find({}).sort({ createdAt: -1 }).limit(5).populate("user", "name"),
+        {
+          $lookup: {
+            from: "events",
+            localField: "_id",
+            foreignField: "_id",
+            as: "eventDetails",
+          },
+        },
+        { $unwind: "$eventDetails" },
+        { $project: { title: "$eventDetails.title", totalTicketsSold: 1 } },
+      ]),
+      Order.aggregate([
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
+            total: { $sum: "$totalPrice" },
+          },
+        },
+        { $sort: { "_id.year": 1, "_id.month": 1 } },
+      ]),
     ]);
 
     const totalSales = totalSalesData.length > 0 ? totalSalesData[0].total : 0;
 
     res.json({
       userCount,
-      eventCount,
-      orderCount,
+      newUsersThisMonth,
+      activeEventCount,
       totalSales,
-      recentUsers,
-      recentOrders,
+      topSellingEvents,
+      monthlySales,
     });
   } catch (error) {
-    console.error("Greška pri dohvaćanju statistike:", error);
+    console.error("Greška pri dohvaćanju analitike:", error);
     res.status(500).json({ message: "Greška na serveru" });
   }
 };

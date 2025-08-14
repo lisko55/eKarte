@@ -200,14 +200,12 @@ const getAllOrders = async (req, res) => {
 
 const getOrderById = async (req, res) => {
   try {
-    // Popunjavamo narudžbu s podacima o korisniku (ime i email)
     const order = await Order.findById(req.params.id).populate(
       "user",
       "name email"
     );
 
     if (order) {
-      // Sigurnosna provjera: da li je prijavljeni korisnik vlasnik narudžbe ILI je admin
       if (
         order.user._id.toString() !== req.user.id &&
         req.user.role !== "admin" &&
