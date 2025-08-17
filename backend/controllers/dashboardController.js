@@ -11,9 +11,10 @@ const getStats = async (req, res) => {
       userCount,
       newUsersThisMonth,
       activeEventCount,
+
       totalSalesData,
       topSellingEvents,
-      monthlySales,
+      salesByTicketType,
     ] = await Promise.all([
       User.countDocuments({}),
 
@@ -35,7 +36,6 @@ const getStats = async (req, res) => {
         },
         { $sort: { totalTicketsSold: -1 } },
         { $limit: 5 },
-
         {
           $lookup: {
             from: "events",
@@ -45,23 +45,32 @@ const getStats = async (req, res) => {
           },
         },
         { $unwind: "$eventDetails" },
-        { $project: { title: "$eventDetails.title", totalTicketsSold: 1 } },
-      ]),
-      Order.aggregate([
         {
-          $group: {
-            _id: {
-              year: { $year: "$createdAt" },
-              month: { $month: "$createdAt" },
-            },
-            total: { $sum: "$totalPrice" },
+          $project: {
+            title: "$eventDetails.title",
+            totalTicketsSold: 1,
           },
         },
-        { $sort: { "_id.year": 1, "_id.month": 1 } },
+      ]),
+
+      Order.aggregate([
+        { $unwind: "$orderItems" },
+        {
+          $group: {
+            _id: "$orderItems.name",
+            count: { $sum: "$orderItems.quantity" },
+          },
+        },
+        { $sort: { count: -1 } },
       ]),
     ]);
 
     const totalSales = totalSalesData.length > 0 ? totalSalesData[0].total : 0;
+
+    const simplifiedSalesByTicketType = salesByTicketType.map((item) => {
+      const nameOnly = item._id.split(" - ")[0];
+      return { ...item, _id: nameOnly };
+    });
 
     res.json({
       userCount,
@@ -69,7 +78,7 @@ const getStats = async (req, res) => {
       activeEventCount,
       totalSales,
       topSellingEvents,
-      monthlySales,
+      salesByTicketType: simplifiedSalesByTicketType,
     });
   } catch (error) {
     console.error("Greška pri dohvaćanju analitike:", error);

@@ -184,20 +184,46 @@ const getAllOrders = async (req, res) => {
     const pageSize = 10;
     const page = Number(req.query.pageNumber) || 1;
 
-    const count = await Order.countDocuments({});
-    const orders = await Order.find({})
-      .populate("user", "id name")
-      .limit(pageSize)
-      .skip(pageSize * (page - 1))
-      .sort({ createdAt: -1 });
+    const filter = {};
 
-    res.json({ orders, page, pages: Math.ceil(count / pageSize) });
+    if (req.query.userId) {
+      filter.user = req.query.userId;
+    }
+
+    if (req.query.eventId) {
+      filter["orderItems.event"] = req.query.eventId;
+    }
+
+    if (req.query.startDate) {
+      filter.createdAt = {
+        ...filter.createdAt,
+        $gte: new Date(req.query.startDate),
+      };
+    }
+    if (req.query.endDate) {
+      const endDate = new Date(req.query.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      filter.createdAt = { ...filter.createdAt, $lte: endDate };
+    }
+
+    const count = await Order.countDocuments(filter);
+
+    const orders = await Order.find(filter)
+      .populate("user", "id name")
+      .sort({ createdAt: -1 })
+      .limit(pageSize)
+      .skip(pageSize * (page - 1));
+
+    res.json({
+      orders,
+      page,
+      pages: Math.ceil(count / pageSize),
+    });
   } catch (error) {
     console.error("Greška pri dohvaćanju svih narudžbi:", error);
     res.status(500).json({ message: "Greška na serveru" });
   }
 };
-
 const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate(

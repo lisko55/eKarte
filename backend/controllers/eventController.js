@@ -1,4 +1,6 @@
 const Event = require("../models/Event");
+const Order = require("../models/Order");
+const mongoose = require("mongoose");
 
 const createEvent = async (req, res) => {
   try {
@@ -156,10 +158,71 @@ const deleteEvent = async (req, res) => {
   }
 };
 
+const getEventAnalytics = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+
+    const event = await Event.findById(eventId).lean();
+    if (!event)
+      return res.status(404).json({ message: "Događaj nije pronađen" });
+
+    const analyticsData = await Order.aggregate([
+      { $match: { "orderItems.event": new mongoose.Types.ObjectId(eventId) } },
+
+      { $unwind: "$orderItems" },
+
+      { $match: { "orderItems.event": new mongoose.Types.ObjectId(eventId) } },
+
+      {
+        $group: {
+          _id: null,
+          totalRevenue: {
+            $sum: { $multiply: ["$orderItems.price", "$orderItems.quantity"] },
+          },
+          totalTicketsSold: { $sum: "$orderItems.quantity" },
+
+          salesByTicketType: {
+            $push: {
+              name: "$orderItems.name",
+              quantity: "$orderItems.quantity",
+            },
+          },
+        },
+      },
+    ]);
+
+    let salesByType = {};
+    if (analyticsData.length > 0) {
+      analyticsData[0].salesByTicketType.forEach((item) => {
+        const typeName = item.name.split(" - ")[0];
+        salesByType[typeName] = (salesByType[typeName] || 0) + item.quantity;
+      });
+    }
+
+    const finalStats = {
+      eventName: event.title,
+      totalRevenue:
+        analyticsData.length > 0 ? analyticsData[0].totalRevenue : 0,
+      totalTicketsSold:
+        analyticsData.length > 0 ? analyticsData[0].totalTicketsSold : 0,
+      salesByTicketType: Object.entries(salesByType).map(([name, count]) => ({
+        name,
+        count,
+      })),
+    };
+
+    res.json(finalStats);
+  } catch (error) {
+    console.error("Greška pri dohvaćanju analitike događaja:", error);
+    res.status(500).json({ message: "Greška na serveru" });
+  }
+};
+
 module.exports = {
   createEvent,
   getEvents,
   getEventById,
   updateEvent,
   deleteEvent,
+  getEventAnalytics,
 };

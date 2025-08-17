@@ -8,6 +8,7 @@ const {
   getEventById,
   updateEvent,
   deleteEvent,
+  getEventAnalytics,
 } = require("../controllers/eventController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 
@@ -64,5 +65,9 @@ router
     updateEvent
   )
   .delete(protect, authorize("superadmin", "admin"), deleteEvent);
+
+router
+  .route("/:id/analytics")
+  .get(protect, authorize("superadmin", "admin"), getEventAnalytics);
 
 module.exports = router;

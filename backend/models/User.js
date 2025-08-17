@@ -59,13 +59,6 @@ const UserSchema = new mongoose.Schema(
     cart: [CartItemSchema],
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-
-    favorites: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Event",
-      },
-    ],
   },
 
   {
