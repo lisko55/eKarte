@@ -75,14 +75,36 @@ const getEvents = async (req, res) => {
     const category = req.query.category ? { category: req.query.category } : {};
 
     const query = { ...keyword, ...category };
+    let sortOption = { date: 1 };
 
-    const count = await Event.countDocuments(query);
-    const events = await Event.find(query)
+    if (req.query.sort) {
+      switch (req.query.sort) {
+        case "date_desc":
+          sortOption = { date: -1 };
+          break;
+        case "price_asc":
+          sortOption = { "ticketTypes.0.price": 1 };
+          break;
+        case "price_desc":
+          sortOption = { "ticketTypes.0.price": -1 };
+          break;
+        default:
+          sortOption = { date: 1 };
+      }
+    }
+
+    const count = await Event.countDocuments({ ...keyword, ...category });
+    const events = await Event.find({ ...keyword, ...category })
+      .populate("organizer", "name email")
+      .sort(sortOption)
       .limit(pageSize)
-      .skip(pageSize * (page - 1))
-      .sort({ date: 1 });
+      .skip(pageSize * (page - 1));
 
-    res.json({ events, page, pages: Math.ceil(count / pageSize) });
+    res.json({
+      events,
+      page,
+      pages: Math.ceil(count / pageSize),
+    });
   } catch (error) {
     res.status(500).json({ message: "Greška na serveru" });
   }
