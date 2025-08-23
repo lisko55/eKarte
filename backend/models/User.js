@@ -36,13 +36,18 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    googleId: { type: String },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
     },
     phone: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
     },
     role: {
       type: String,
