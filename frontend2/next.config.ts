@@ -2,25 +2,14 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "utfs.io", // UploadThing
-      },
-      {
-        protocol: "https",
-        hostname: "**", // <--- OVO DOZVOLJAVA SVE HTTPS DOMENE
-      },
-      {
-        protocol: "http",
-        hostname: "**", // <--- OVO DOZVOLJAVA SVE HTTP DOMENE
-      },
+      { protocol: "https", hostname: "utfs.io" },
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
     ],
   },
-  // Ovo sprječava greške ako koristiš mongoose u server components
-  experimental: {
-    // OVO JE KLJUČNO ZA PDF GENERIRANJE
-    serverComponentsExternalPackages: ["mongoose", "@react-pdf/renderer"],
-  },
+  // --- OVO JE NOVO MJESTO (Izvan experimental) ---
+  serverExternalPackages: ["mongoose", "@react-pdf/renderer"],
+  // -----------------------------------------------
 };
 
 export default nextConfig;

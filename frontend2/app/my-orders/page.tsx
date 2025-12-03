@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { CalendarDays, ShoppingBag } from "lucide-react";
+export const dynamic = "force-dynamic";
 
 export default async function MyOrdersPage() {
   // VIŠE NE TREBA DEMO_USER_ID!

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, MapPin, Ticket, ArrowRight, QrCode } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+export const dynamic = "force-dynamic";
 
 export default async function MyTicketsPage() {
   const tickets = await getMyTickets();
