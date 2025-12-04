@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation"; // Samo jedan import
+import { useRouter, usePathname } from "next/navigation";
 import {
   ShoppingCart,
   User,
   LogOut,
-  Package,
+  Settings,
   LayoutDashboard,
+  Menu,
+  Package,
   Ticket,
-} from "lucide-react";
+} from "lucide-react"; // Dodaj Menu ikonu
 
-// Shadcn komponente
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,19 +25,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // <--- NOVI IMPORT
 
-// Context i Actions
 import { useCart } from "@/context/cart-context";
 import { logoutUser } from "@/actions/auth-actions";
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-
-  // Svi hookovi moraju biti pozvani na vrhu, PRIJE bilo kakvog return-a
   const { cartItems, clearCart } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [userInfo, setUserInfo] = useState<any>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false); // Za zatvaranje menija na klik
 
   useEffect(() => {
     setIsMounted(true);
@@ -60,15 +60,8 @@ export default function Header() {
     router.refresh();
   };
 
-  // --- POPRAVAK: Provjera rute ide TEK OVDJE ---
-  // Ako smo na admin ruti, ne prikazuj header, ali hookovi su se već izvršili
-  if (pathname?.startsWith("/admin")) {
-    return null;
-  }
-
-  if (!isMounted) {
-    return <header className="h-16 border-b bg-background" />;
-  }
+  if (pathname?.startsWith("/admin")) return null;
+  if (!isMounted) return <header className="h-16 border-b bg-background" />;
 
   const isAdmin =
     userInfo && (userInfo.role === "admin" || userInfo.role === "superadmin");
@@ -76,59 +69,86 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
-        {/* 1. LOGO I GLAVNI LINKOVI */}
-        <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="flex items-center space-x-2 font-bold text-xl"
-          >
-            <span>TvojLogo</span>
-          </Link>
+        {/* 1. MOBILNI MENI (HAMBURGER) - Vidi se samo na mobitelu (md:hidden) */}
+        <div className="md:hidden mr-2">
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <div className="flex flex-col gap-6 mt-6">
+                <Link
+                  href="/"
+                  onClick={() => setIsSheetOpen(false)}
+                  className="text-xl font-bold"
+                >
+                  TvojLogo
+                </Link>
+                <nav className="flex flex-col gap-4">
+                  <Link
+                    href="/"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="text-lg font-medium hover:text-primary"
+                  >
+                    Početna
+                  </Link>
+                  {/* Ovdje možeš dodati linkove na kategorije */}
+                  <Link
+                    href="/?category=Muzika"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="text-lg font-medium hover:text-primary"
+                  >
+                    Koncerti
+                  </Link>
+                  <Link
+                    href="/?category=Sport"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="text-lg font-medium hover:text-primary"
+                  >
+                    Sport
+                  </Link>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link
-              href="/"
-              className={`transition-colors hover:text-primary ${
-                pathname === "/" ? "text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              Početna
-            </Link>
-
-            {isAdmin && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex gap-2 items-center">
-                    <LayoutDashboard className="h-4 w-4" />
-                    Admin
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>Admin Panel</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/dashboard">Pregled</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/dashboard">Prihodi</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/userlist">Korisnici</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/eventlist">Događaji</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/orderlist">Narudžbe</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </nav>
+                  {isAdmin && (
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={() => setIsSheetOpen(false)}
+                      className="text-lg font-medium text-blue-600"
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
-        {/* 2. DESNA STRANA */}
-        <div className="flex items-center gap-4">
+        {/* 2. LOGO (Uvijek vidljiv) */}
+        <Link
+          href="/"
+          className="flex items-center space-x-2 font-bold text-xl mr-auto md:mr-0"
+        >
+          <span>TvojLogo</span>
+        </Link>
+
+        {/* 3. DESKTOP NAVIGACIJA - Sakrivena na mobitelu (hidden md:flex) */}
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-6">
+          <Link href="/" className="transition-colors hover:text-primary">
+            Početna
+          </Link>
+          {isAdmin && (
+            <Button variant="ghost" asChild className="gap-2">
+              <Link href="/admin/dashboard">
+                <LayoutDashboard className="h-4 w-4" /> Admin
+              </Link>
+            </Button>
+          )}
+        </nav>
+
+        {/* 4. DESNA STRANA (Cart & User) - Uvijek vidljivo */}
+        <div className="flex items-center gap-2 md:gap-4 ml-auto">
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
@@ -159,12 +179,12 @@ export default function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
+                <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {userInfo.name} {userInfo.lastName}
+                      {userInfo.name}
                     </p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-xs text-muted-foreground truncate">
                       {userInfo.email}
                     </p>
                   </div>
@@ -173,7 +193,7 @@ export default function Header() {
                 <DropdownMenuItem asChild>
                   <Link
                     href="/profile"
-                    className="cursor-pointer flex w-full items-center"
+                    className="cursor-pointer w-full flex items-center"
                   >
                     <User className="mr-2 h-4 w-4" /> Profil
                   </Link>
@@ -181,17 +201,15 @@ export default function Header() {
                 <DropdownMenuItem asChild>
                   <Link
                     href="/my-tickets"
-                    className="cursor-pointer flex w-full items-center font-semibold text-primary"
+                    className="cursor-pointer w-full flex items-center"
                   >
-                    <Ticket className="mr-2 h-4 w-4" />{" "}
-                    {/* Importaj Ticket iz lucide-react */}
-                    Moje Ulaznice
+                    <Ticket className="mr-2 h-4 w-4" /> Moje Ulaznice
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
                     href="/my-orders"
-                    className="cursor-pointer flex w-full items-center"
+                    className="cursor-pointer w-full flex items-center"
                   >
                     <Package className="mr-2 h-4 w-4" /> Moje Narudžbe
                   </Link>
@@ -207,10 +225,10 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <div className="flex gap-2">
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="hidden sm:inline-flex">
                 <Link href="/login">Prijava</Link>
               </Button>
-              <Button asChild>
+              <Button asChild size="sm" className="px-4">
                 <Link href="/register">Registracija</Link>
               </Button>
             </div>
