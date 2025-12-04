@@ -3,11 +3,11 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 
 // 1. Importiraj HEADER (ne Navbar)
-import Header from "@/components/header"; 
-import Footer from "@/components/footer"; // Pretpostavljam da je footer u components folderu
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 // 2. Importiraj CartProvider
-import { CartProvider } from "@/context/cart-context"; 
+import { CartProvider } from "@/context/cart-context";
 
 import { Toaster } from "sonner";
 
@@ -18,7 +18,11 @@ export const metadata: Metadata = {
   description: "Opis aplikacije",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="hr">
       <body className={inter.className}>
@@ -30,10 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </main>
             <Footer />
           </div>
-          
+
           {/* DODAJ OVO NA DNU (prije zatvaranja CartProvidera ili Body-a) */}
-          <Toaster /> 
-          
+          <Toaster />
         </CartProvider>
       </body>
     </html>
