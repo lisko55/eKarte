@@ -21,13 +21,6 @@ const nextConfig = {
   },
 
   serverExternalPackages: ["mongoose", "@react-pdf/renderer"],
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
 };
 
 export default withPWA(nextConfig as any);
