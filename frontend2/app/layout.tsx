@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-
+import { InstallPWA } from "@/components/install-pwa";
 // 1. Importiraj HEADER (ne Navbar)
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -42,8 +42,7 @@ export default function RootLayout({
             </main>
             <Footer />
           </div>
-
-          {/* DODAJ OVO NA DNU (prije zatvaranja CartProvidera ili Body-a) */}
+          <InstallPWA />
           <Toaster />
         </CartProvider>
       </body>
