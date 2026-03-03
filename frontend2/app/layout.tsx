@@ -14,7 +14,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Moja Aplikacija",
+  title: "eKarte",
   description: "Najbolja place za kupovinu ulaznica!",
   manifest: "/manifest.json",
 };
