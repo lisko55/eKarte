@@ -60,6 +60,7 @@ interface TicketEmailProps {
     uniqueId: string;
   }[];
   totalPrice: number;
+  isFreeTicket?: boolean;
 }
 
 export async function sendTicketEmail({
@@ -68,11 +69,33 @@ export async function sendTicketEmail({
   orderId,
   tickets,
   totalPrice,
+  isFreeTicket = false,
 }: TicketEmailProps) {
   // Generiraj PDF Buffer
   const pdfBuffer = await renderToBuffer(
-    <TicketPDF tickets={tickets} orderId={orderId} />
+    <TicketPDF tickets={tickets} orderId={orderId} />,
   );
+
+  // --- LOGIKA ZA TEKST MAILA (Gratis vs Kupljeno) ---
+  const subjectText = isFreeTicket
+    ? `Vaše gratis ulaznice (Narudžba #${orderId.substring(0, 8)})`
+    : `Vaše ulaznice (Narudžba #${orderId.substring(0, 8)})`;
+
+  const headingText = isFreeTicket
+    ? `Evo vaših ulaznica, ${customerName}!`
+    : `Hvala na kupovini, ${customerName}!`;
+
+  const descriptionText = isFreeTicket
+    ? `Vaše gratis ulaznice za narudžbu <strong>#${orderId}</strong> su spremne.`
+    : `Vaša narudžba <strong>#${orderId}</strong> je uspješno obrađena.`;
+
+  const priceBoxHtml = isFreeTicket
+    ? `<div style="background-color: #0f172a; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px;">
+         <p style="margin: 0; font-size: 18px;"><strong>GRATIS ULAZNICA</strong></p>
+       </div>`
+    : `<div style="background-color: #0f172a; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px;">
+         <p style="margin: 0; font-size: 18px;">Ukupno plaćeno: <strong>${totalPrice} KM</strong></p>
+       </div>`;
 
   const htmlBody = `
     <div style="font-family: sans-serif; color: #333;">
@@ -97,5 +120,38 @@ export async function sendTicketEmail({
         contentType: "application/pdf",
       },
     ],
+  });
+}
+// --- 4. EMAIL ZA NOVOG ORGANIZATORA ---
+export async function sendOrganizerWelcomeEmail(
+  email: string,
+  orgName: string,
+  plainPassword: string,
+) {
+  const loginLink = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
+
+  await transporter.sendMail({
+    from: '"eKarte B2B" <noreply@ekarte.com>',
+    to: email,
+    subject: "Vaš organizatorski račun je odobren! 🎉",
+    html: `
+      <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 12px;">
+        <h1 style="color: #0f172a;">Dobrodošli, ${orgName}!</h1>
+        <p>Vaš zahtjev za partnerstvo sa eKarte platformom je <strong>odobren</strong>.</p>
+        <p>Sada možete objavljivati događaje, pratiti prodaju i skenirati ulaznice na ulazu.</p>
+        
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>Vaši pristupni podaci:</strong></p>
+            <p style="margin: 0 0 5px 0;">Email: <strong>${email}</strong></p>
+            <p style="margin: 0;">Privremena lozinka: <strong style="font-family: monospace; font-size: 18px; color: #2563eb;">${plainPassword}</strong></p>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b;">* Preporučujemo da promijenite lozinku u postavkama profila nakon prve prijave.</p>
+
+        <a href="${loginLink}" style="display: inline-block; background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold;">
+            Prijavite se na Panel
+        </a>
+      </div>
+    `,
   });
 }

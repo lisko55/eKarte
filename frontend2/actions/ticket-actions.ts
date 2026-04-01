@@ -1,11 +1,16 @@
 "use server";
 
+import crypto from "crypto";
 import connectDB from "@/lib/db";
 import Ticket from "@/models/ticket";
 import EventModel from "@/models/event";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import * as OTPAuth from "otpauth";
+import User from "@/models/user";
+import Order from "@/models/order";
+import QRCode from "qrcode";
+import { sendTicketEmail } from "@/lib/mail";
 
 export async function getSecureTicket(ticketId: string) {
   try {
@@ -226,7 +231,14 @@ export async function validateTicketScan(qrData: string) {
   try {
     await connectDB();
     const session = await getSession();
-    if (!session || !session.isAdmin) return { error: "Niste autorizirani." };
+
+    // --- POPRAVAK: Dozvoli Adminu, Organizatoru i Skeneru ---
+    const isAllowed =
+      session &&
+      (session.isAdmin ||
+        session.role === "organizer" ||
+        session.role === "scanner");
+    if (!isAllowed) return { error: "Niste autorizirani.", valid: false };
 
     let ticketId = qrData;
     let totpToken = null;
@@ -237,18 +249,29 @@ export async function validateTicketScan(qrData: string) {
       totpToken = parts[1];
     }
 
-    // --- POPRAVAK OVDJE ---
-    // Moramo dodati .select("+secretKey") jer je po defaultu skriven
     const ticket = await Ticket.findById(ticketId)
-      .select("+secretKey") // <--- OVO JE NEDOSTAJALO
+      .select("+secretKey")
       .populate("event")
       .populate("owner", "name lastName");
-    // ---------------------
 
-    if (!ticket) {
+    if (!ticket)
       return { error: "Ulaznica ne postoji u sistemu.", valid: false };
-    }
 
+    // --- NOVA SIGURNOSNA PROVJERA ZA SKENERA ---
+    // Ako je korisnik "skener", moramo provjeriti da li karta pripada njegovom šefu (organizatoru)
+    if (session.role === "scanner") {
+      const scannerUser = await User.findById(session.userId).select(
+        "employer",
+      );
+      if (
+        ticket.event.organizer?.toString() !== scannerUser?.employer?.toString()
+      ) {
+        return {
+          error: "ZABRANJENO: Ova ulaznica pripada drugom organizatoru!",
+          valid: false,
+        };
+      }
+    }
     if (ticket.status === "used") {
       // --- POPRAVAK OVDJE ---
       // Ne smijemo vratiti cijeli 'ticket' objekt jer Next.js puca.
@@ -316,6 +339,7 @@ export async function validateTicketScan(qrData: string) {
     // USPJEŠAN ULAZ
     ticket.status = "used";
     ticket.usedAt = new Date();
+    ticket.scannedBy = session.userId; // Bilježimo koji skener je skenirao kartu
     await ticket.save();
 
     return {
@@ -330,5 +354,145 @@ export async function validateTicketScan(qrData: string) {
   } catch (error) {
     console.error("Scan error:", error);
     return { error: "Greška pri očitanju koda.", valid: false };
+  }
+}
+
+function generateSecret() {
+  return crypto.randomBytes(20).toString("hex");
+}
+
+// --- IZDAVANJE GRATIS ULAZNICA ---
+export async function issueFreeTicket(formData: FormData) {
+  try {
+    await connectDB();
+    const session = await getSession();
+
+    if (!session || (!session.isAdmin && session.role !== "organizer")) {
+      return { error: "Nije dozvoljeno." };
+    }
+
+    const eventId = formData.get("eventId") as string;
+    const ticketTypeId = formData.get("ticketTypeId") as string;
+    const quantity = Number(formData.get("quantity"));
+    const guestName = formData.get("guestName") as string;
+    const guestEmail = formData.get("guestEmail") as string;
+
+    if (!eventId || !ticketTypeId || !quantity || !guestName || !guestEmail) {
+      return { error: "Sva polja su obavezna." };
+    }
+
+    // 1. Provjera vlasništva nad događajem (ako je organizator)
+    const event = await EventModel.findById(eventId);
+    if (!event) return { error: "Događaj nije pronađen." };
+
+    if (
+      session.role === "organizer" &&
+      event.organizer?.toString() !== session.userId
+    ) {
+      return { error: "Ovo nije vaš događaj!" };
+    }
+
+    const ticketType = event.ticketTypes.find(
+      (t: any) => t._id.toString() === ticketTypeId,
+    );
+    if (!ticketType) return { error: "Tip ulaznice ne postoji." };
+
+    if (ticketType.quantity < quantity) {
+      return {
+        error: `Nema dovoljno dostupnih ulaznica (Ostalo: ${ticketType.quantity}).`,
+      };
+    }
+
+    // 2. Kreiranje "Nultog" Ordera (Da imamo trag kome smo izdali)
+    const newOrder = await Order.create({
+      user: session.userId, // Vežemo na organizatora jer guest možda nema account
+      orderItems: [
+        {
+          name: `${event.title} - ${ticketType.name} (GRATIS)`,
+          quantity: quantity,
+          price: 0,
+          image: event.image,
+          event: eventId,
+          ticketType: ticketTypeId,
+        },
+      ],
+      paymentMethod: "Gratis",
+      paymentResult: {
+        id: "GRATIS_" + Date.now(),
+        status: "completed",
+        email_address: guestEmail,
+      },
+      totalPrice: 0,
+      isPaid: true,
+      paidAt: new Date(),
+    });
+
+    // 3. Smanjenje zaliha
+    await EventModel.updateOne(
+      { _id: eventId, "ticketTypes._id": ticketTypeId },
+      { $inc: { "ticketTypes.$.quantity": -quantity } },
+    );
+
+    // 4. Kreiranje Ticketa i generiranje QR kodova za mail
+    const ticketDataForEmail = [];
+
+    for (let i = 0; i < quantity; i++) {
+      const secret = generateSecret();
+
+      const newTicket = await Ticket.create({
+        event: eventId,
+        ticketType: {
+          _id: ticketTypeId,
+          name: ticketType.name,
+          price: 0, // Gratis karta vrijedi 0
+        },
+        owner: session.userId, // Tehnički je vlasnik org, ali karta glasi na ime gosta
+        originalOwner: session.userId,
+        purchaseOrder: newOrder._id,
+        purchasePrice: 0,
+        secretKey: secret,
+        status: "valid",
+        history: [
+          {
+            action: "created",
+            fromUser: session.userId,
+            toUser: session.userId,
+            price: 0,
+          },
+        ],
+      });
+
+      const uniqueTicketId = `${newOrder._id}-${ticketTypeId}-${i}`;
+      const qrCodeDataUrl = await QRCode.toDataURL(uniqueTicketId);
+
+      ticketDataForEmail.push({
+        eventName: event.title,
+        ticketType: ticketType.name + " (GRATIS)",
+        price: 0,
+        qrCodeDataUrl,
+        uniqueId: newTicket._id.toString(), // Koristimo stvarni ID karte
+      });
+    }
+
+    // 5. Slanje Maila Gosti
+    try {
+      await sendTicketEmail({
+        customerName: guestName, // Ime gosta
+        customerEmail: guestEmail, // Email gosta
+        orderId: newOrder._id.toString(),
+        totalPrice: 0,
+        tickets: ticketDataForEmail,
+        isFreeTicket: true,
+      });
+    } catch (e) {
+      console.error("Greška pri slanju gratis maila:", e);
+    }
+
+    // Osvježavanje UI-a
+    revalidatePath(`/admin/events/${eventId}/analytics`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Greška pri izdavanju gratis karte:", error);
+    return { error: error.message };
   }
 }

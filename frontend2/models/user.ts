@@ -18,14 +18,15 @@ const CartItemSchema = new Schema(
       min: 1,
     },
   },
-  { _id: true }
+  { _id: true },
 );
 
 // 2. Glavna User shema
 const UserSchema = new Schema(
   {
     name: { type: String, required: true },
-    lastName: { type: String, required: true }, // Novo polje
+    lastName: { type: String, required: true },
+    organizationName: { type: String },
     email: { type: String, required: true, unique: true },
 
     googleId: { type: String }, // Za Google Login (kasnije)
@@ -47,13 +48,14 @@ const UserSchema = new Schema(
 
     role: {
       type: String,
-      enum: ["user", "admin", "superadmin"],
+      enum: ["user", "admin", "superadmin", "scanner", "organizer"],
       default: "user",
     },
 
     isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
     balance: { type: Number, default: 0 },
+    employer: { type: Schema.Types.ObjectId, ref: "User" }, // Referenca na poslodavca (ako je partner)
 
     // Košarica u bazi (korisno za sinkronizaciju ako se user logira na drugom uređaju)
     cart: [CartItemSchema],
@@ -63,10 +65,7 @@ const UserSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-// 3. Singleton pattern za Next.js
-const User = models.User || model("User", UserSchema);
-
-export default User;
+export default models.User || model("User", UserSchema);

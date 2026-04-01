@@ -1,4 +1,5 @@
 import mongoose, { Schema, model, models } from "mongoose";
+import "@/models/user";
 
 // Definiramo pod-shemu za tipove ulaznica
 const TicketTypeSchema = new Schema({
@@ -10,7 +11,7 @@ const TicketTypeSchema = new Schema({
 
 const EventSchema = new Schema(
   {
-    title: { type: String, required: true }, // U starom kodu je 'title', ne 'name'
+    title: { type: String, required: true },
     description: { type: String, required: true },
     date: { type: Date, required: true },
     location: { type: String, required: true },
@@ -21,10 +22,11 @@ const EventSchema = new Schema(
     },
     image: { type: String, required: true },
     ticketTypes: [TicketTypeSchema], // Niz tipova ulaznica
+    organizer: { type: Schema.Types.ObjectId, ref: "User", required: true }, // Referenca na organizatora
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Singleton pattern za Next.js (da ne kreira model više puta)

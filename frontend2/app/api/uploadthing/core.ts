@@ -6,10 +6,14 @@ const f = createUploadthing();
 // Definiramo tko može uploadati
 const auth = async () => {
   const session = await getSession();
-  if (!session || !session.isAdmin) throw new Error("Unauthorized");
+
+  // Dozvoli upload ako je korisnik Admin ILI Organizator
+  if (!session || (!session.isAdmin && session.role !== "organizer")) {
+    throw new Error("Unauthorized");
+  }
+
   return { userId: session.userId };
 };
-
 export const ourFileRouter = {
   // Ruta za slike događaja
   imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })

@@ -12,7 +12,7 @@ import {
   Menu,
   Package,
   Ticket,
-} from "lucide-react"; // Dodaj Menu ikonu
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // <--- NOVI IMPORT
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 import { useCart } from "@/context/cart-context";
 import { logoutUser } from "@/actions/auth-actions";
@@ -36,7 +42,17 @@ export default function Header() {
   const { cartItems, clearCart } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [userInfo, setUserInfo] = useState<any>(null);
-  const [isSheetOpen, setIsSheetOpen] = useState(false); // Za zatvaranje menija na klik
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsSheetOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -48,7 +64,7 @@ export default function Header() {
 
   const itemCount = cartItems.reduce(
     (sum: number, item: any) => sum + item.quantity,
-    0
+    0,
   );
 
   const handleLogout = async () => {
@@ -63,21 +79,38 @@ export default function Header() {
   if (pathname?.startsWith("/admin")) return null;
   if (!isMounted) return <header className="h-16 border-b bg-background" />;
 
-  const isAdmin =
-    userInfo && (userInfo.role === "admin" || userInfo.role === "superadmin");
+  // --- NOVA LOGIKA ZA ULOGE ---
+  const userRole = userInfo?.role;
+  const hasPanelAccess =
+    userRole === "admin" ||
+    userRole === "superadmin" ||
+    userRole === "organizer" ||
+    userRole === "scanner";
+  const panelLink =
+    userRole === "scanner" ? "/admin/scanner" : "/admin/dashboard";
+  const panelName =
+    userRole === "organizer"
+      ? "Partner Panel"
+      : userRole === "scanner"
+        ? "Skener"
+        : "Admin Panel";
+  // ----------------------------
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
       <div className="container flex h-16 items-center justify-between px-4">
-        {/* 1. MOBILNI MENI (HAMBURGER) - Vidi se samo na mobitelu (md:hidden) */}
+        {/* 1. MOBILNI MENI (HAMBURGER) */}
         <div className="md:hidden mr-2">
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen} modal={false}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <VisuallyHidden.Root>
+                <SheetTitle>Meni</SheetTitle>
+              </VisuallyHidden.Root>
               <div className="flex flex-col gap-6 mt-6">
                 <Link
                   href="/"
@@ -94,7 +127,6 @@ export default function Header() {
                   >
                     Početna
                   </Link>
-                  {/* Ovdje možeš dodati linkove na kategorije */}
                   <Link
                     href="/?category=Muzika"
                     onClick={() => setIsSheetOpen(false)}
@@ -110,13 +142,14 @@ export default function Header() {
                     Sport
                   </Link>
 
-                  {isAdmin && (
+                  {/* MOBILNI DUGME ZA PANEL */}
+                  {hasPanelAccess && (
                     <Link
-                      href="/admin/dashboard"
+                      href={panelLink}
                       onClick={() => setIsSheetOpen(false)}
-                      className="text-lg font-medium text-blue-600"
+                      className="text-lg font-bold text-blue-600"
                     >
-                      Admin Panel
+                      {panelName}
                     </Link>
                   )}
                 </nav>
@@ -125,7 +158,7 @@ export default function Header() {
           </Sheet>
         </div>
 
-        {/* 2. LOGO (Uvijek vidljiv) */}
+        {/* 2. LOGO */}
         <Link
           href="/"
           className="flex items-center space-x-2 font-bold text-xl mr-auto md:mr-0"
@@ -133,21 +166,27 @@ export default function Header() {
           <span>TvojLogo</span>
         </Link>
 
-        {/* 3. DESKTOP NAVIGACIJA - Sakrivena na mobitelu (hidden md:flex) */}
+        {/* 3. DESKTOP NAVIGACIJA */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-6">
           <Link href="/" className="transition-colors hover:text-primary">
             Početna
           </Link>
-          {isAdmin && (
-            <Button variant="ghost" asChild className="gap-2">
-              <Link href="/admin/dashboard">
-                <LayoutDashboard className="h-4 w-4" /> Admin
+
+          {/* DESKTOP DUGME ZA PANEL */}
+          {hasPanelAccess && (
+            <Button
+              variant="ghost"
+              asChild
+              className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-bold"
+            >
+              <Link href={panelLink}>
+                <LayoutDashboard className="h-4 w-4" /> {panelName}
               </Link>
             </Button>
           )}
         </nav>
 
-        {/* 4. DESNA STRANA (Cart & User) - Uvijek vidljivo */}
+        {/* 4. DESNA STRANA (Cart & User) */}
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
@@ -167,12 +206,12 @@ export default function Header() {
                   variant="ghost"
                   className="relative h-8 w-8 rounded-full"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 border border-slate-200">
                     <AvatarImage
                       src={userInfo.avatar || ""}
                       alt={userInfo.name}
                     />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-slate-900 text-white font-bold">
                       {userInfo.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -181,8 +220,8 @@ export default function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {userInfo.name}
+                    <p className="text-sm font-bold leading-none">
+                      {userInfo.name} {userInfo.lastName}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
                       {userInfo.email}
@@ -190,6 +229,22 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+
+                {/* LINK NA PANEL U DROPDOWNU TAKOĐER */}
+                {hasPanelAccess && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={panelLink}
+                        className="cursor-pointer w-full flex items-center font-bold text-blue-600"
+                      >
+                        <LayoutDashboard className="mr-2 h-4 w-4" /> {panelName}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+
                 <DropdownMenuItem asChild>
                   <Link
                     href="/profile"
@@ -201,7 +256,7 @@ export default function Header() {
                 <DropdownMenuItem asChild>
                   <Link
                     href="/my-tickets"
-                    className="cursor-pointer w-full flex items-center"
+                    className="cursor-pointer w-full flex items-center font-semibold text-primary"
                   >
                     <Ticket className="mr-2 h-4 w-4" /> Moje Ulaznice
                   </Link>
@@ -217,7 +272,7 @@ export default function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-600 cursor-pointer"
+                  className="text-red-600 cursor-pointer font-medium"
                 >
                   <LogOut className="mr-2 h-4 w-4" /> Odjava
                 </DropdownMenuItem>
@@ -228,7 +283,11 @@ export default function Header() {
               <Button variant="ghost" asChild className="hidden sm:inline-flex">
                 <Link href="/login">Prijava</Link>
               </Button>
-              <Button asChild size="sm" className="px-4">
+              <Button
+                asChild
+                size="sm"
+                className="px-4 bg-slate-900 hover:bg-slate-800"
+              >
                 <Link href="/register">Registracija</Link>
               </Button>
             </div>

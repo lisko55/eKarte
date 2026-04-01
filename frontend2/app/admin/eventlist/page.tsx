@@ -10,8 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/admin/pagination";
 import { EventDeleteButton } from "@/components/admin/event-delete-button";
-import { Plus, CalendarDays, MapPin, Edit } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Edit, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import { getSession } from "@/lib/session";
+import { getAdminEvents } from "@/actions/event-actions";
 import Image from "next/image";
 
 interface EventListPageProps {
@@ -30,19 +32,24 @@ function formatDate(dateString: string) {
   });
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function EventListPage(props: EventListPageProps) {
   const searchParams = await props.searchParams;
   const page = Number(searchParams.page) || 1;
 
   // Koristimo postojeću akciju, sortiramo po datumu desc
-  const { events, pages } = await getEvents({ page, sort: "date_desc" });
+  const { events, pages } = await getAdminEvents(page);
+  const session = await getSession();
+  const isOrganizer = session?.role === "organizer";
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Upravljanje Događajima</h1>
+        <h1 className="text-2xl font-bold">
+          {isOrganizer ? "Moji Događaji" : "Upravljanje Događajima"}
+        </h1>
 
-        {/* GUMB ZA NOVI EVENT */}
         <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
           <Link href="/admin/events/new">
             <Plus className="w-4 h-4 mr-2" />
@@ -61,6 +68,7 @@ export default async function EventListPage(props: EventListPageProps) {
                 <TableHead>Datum</TableHead>
                 <TableHead>Lokacija</TableHead>
                 <TableHead>Kategorija</TableHead>
+                <TableHead>Organizator</TableHead>
                 <TableHead className="text-right">Opcije</TableHead>
               </TableRow>
             </TableHeader>
@@ -94,8 +102,21 @@ export default async function EventListPage(props: EventListPageProps) {
                       {event.category}
                     </span>
                   </TableCell>
+                  <TableCell>{event.organizerName || "Nepoznato"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      {/* NOVO DUGME ZA ANALITIKU */}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        asChild
+                        title="Analitika i Live Ulaz"
+                      >
+                        <Link href={`/admin/events/${event._id}/analytics`}>
+                          <BarChart3 className="w-4 h-4 text-emerald-600" />
+                        </Link>
+                      </Button>
+
                       {/* UREĐIVANJE */}
                       <Button size="icon" variant="ghost" asChild title="Uredi">
                         <Link href={`/admin/events/${event._id}/edit`}>
@@ -103,7 +124,6 @@ export default async function EventListPage(props: EventListPageProps) {
                         </Link>
                       </Button>
 
-                      {/* BRISANJE */}
                       <EventDeleteButton
                         eventId={event._id}
                         eventTitle={event.title}
@@ -115,9 +135,12 @@ export default async function EventListPage(props: EventListPageProps) {
             </TableBody>
           </Table>
         </div>
+
         {events.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground">
-            Nema događaja.
+          <div className="p-12 text-center text-muted-foreground">
+            {isOrganizer
+              ? "Još niste kreirali nijedan događaj."
+              : "Nema događaja u sistemu."}
           </div>
         )}
       </div>

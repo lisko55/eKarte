@@ -83,15 +83,23 @@ export default async function UserListPage(props: UserListPageProps) {
                           user.role === "superadmin"
                             ? "bg-purple-600 hover:bg-purple-700"
                             : user.role === "admin"
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-slate-500"
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : user.role === "organizer"
+                                ? "bg-emerald-600 hover:bg-emerald-700"
+                                : user.role === "scanner"
+                                  ? "bg-orange-500 hover:bg-orange-600"
+                                  : "bg-slate-500"
                         }
                       >
                         {user.role === "superadmin"
                           ? "Super Admin"
                           : user.role === "admin"
-                          ? "Admin"
-                          : "Korisnik"}
+                            ? "Admin"
+                            : user.role === "organizer"
+                              ? "Organizator"
+                              : user.role === "scanner"
+                                ? "Skener"
+                                : "Korisnik"}
                       </Badge>
                     </TableCell>
                     <TableCell>

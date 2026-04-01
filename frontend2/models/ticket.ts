@@ -50,6 +50,11 @@ const TicketSchema = new Schema(
     // Je li iskorištena na ulazu?
     usedAt: { type: Date },
 
+    scannedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User", // Referenca na skenera koji je skenirao kartu
+    },
+
     // --- RESALE MARKET ---
     isListed: { type: Boolean, default: false },
     resalePrice: { type: Number }, // Cijena po kojoj se prodaje (ako je listed)
@@ -72,7 +77,7 @@ const TicketSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexi za brže pretraživanje

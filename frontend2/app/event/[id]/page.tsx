@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Sparkles,
   RefreshCw,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -79,6 +80,10 @@ export default async function EventDetailPage(props: EventPageProps) {
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
                 <span className="font-medium">{event.location}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-primary" />
+                <span className="font-medium">{event.organizerName}</span>
               </div>
             </div>
             <div className="prose max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">

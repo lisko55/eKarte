@@ -1,145 +1,143 @@
 import { getDashboardStats } from "@/actions/admin-actions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CreditCard, Calendar, Activity, Ticket } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { getOrganizerStats } from "@/actions/organizer-actions"; // <--- NOVI IMPORT
+import { getSession } from "@/lib/session"; // <--- NOVI IMPORT
+import { CardDataStats } from "@/components/admin/card-data-stats";
+import { Users, CreditCard, Calendar, Ticket } from "lucide-react";
 import { Overview } from "@/components/admin/overview";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { redirect } from "next/navigation";
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-  if (!stats) return <div>Učitavanje...</div>;
+  const isOrganizer = session.role === "organizer";
+
+  // DOHVATAMO PODATKE OVISNO O ULOZI
+  let stats: any = null;
+
+  if (isOrganizer) {
+    stats = await getOrganizerStats();
+  } else if (session.isAdmin) {
+    stats = await getDashboardStats();
+  }
+
+  if (!stats)
+    return (
+      <div className="p-8 text-center text-slate-500">
+        Učitavanje podataka...
+      </div>
+    );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
+      {/* Naslov se mijenja ovisno o ulozi */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Pregled Sistema</h1>
-        <p className="text-muted-foreground mt-2">
-          Dobrodošli Nazad! Analitika vašeg poslovanja.
-        </p>
+        <h1 className="text-3xl font-bold text-slate-900">
+          {isOrganizer ? "Moj Dashboard" : "Pregled Sistema"}
+        </h1>
+        <p className="text-slate-500 mt-1">Dobrodošli nazad, {session.name as string}.</p>
       </div>
 
-      {/* 1. RED: BROJKE */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Ukupni Prihod"
-          value={`${stats.totalSales} KM`}
-          desc="Sveukupna prodaja"
-          icon={CreditCard}
-          color="text-emerald-600"
-          bg="bg-emerald-100"
-        />
-        <StatsCard
-          title="Korisnici"
-          value={stats.userCount}
-          desc={`+${stats.newUsersThisMonth} ovaj mjesec`}
-          icon={Users}
-          color="text-blue-600"
-          bg="bg-blue-100"
-        />
-        <StatsCard
-          title="Aktivni Događaji"
-          value={stats.activeEventCount}
-          desc="Nadolazeći događaji"
-          icon={Calendar}
-          color="text-purple-600"
-          bg="bg-purple-100"
-        />
-        <StatsCard
-          title="Prodane karte"
-          value={stats.totalTickets}
-          desc="Ukupno izdanih ulaznica"
-          icon={Ticket}
-          color="text-orange-600"
-          bg="bg-orange-100"
-        />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+        <CardDataStats
+          title="Prihod od prodaje"
+          total={`${stats.totalSales} KM`}
+          rate="0%"
+          levelUp
+        >
+          <CreditCard className="h-6 w-6" />
+        </CardDataStats>
+
+        {/* Organizator ne vidi ukupan broj korisnika cijele platforme */}
+        {!isOrganizer && (
+          <CardDataStats
+            title="Ukupno Korisnika"
+            total={stats.userCount?.toString() || "0"}
+            rate=""
+            levelUp
+          >
+            <Users className="h-6 w-6" />
+          </CardDataStats>
+        )}
+
+        <CardDataStats
+          title={isOrganizer ? "Moji Događaji" : "Aktivni Događaji"}
+          total={stats.activeEventCount.toString()}
+        >
+          <Calendar className="h-6 w-6" />
+        </CardDataStats>
+
+        <CardDataStats
+          title="Prodane Karte"
+          total={stats.totalTickets.toString()}
+        >
+          <Ticket className="h-6 w-6" />
+        </CardDataStats>
       </div>
 
-      {/* 2. RED: GRAF + TOP LISTA */}
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-7">
-        {/* GRAFIKON (Zauzima 4 stupca od 7) */}
-        <Card className="col-span-4 shadow-sm border-slate-200">
-          <CardHeader>
-            <CardTitle>Pregled Zarade (Mjesečno)</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <Overview data={stats.monthlyRevenue} />
-          </CardContent>
-        </Card>
+      <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
+        {/* Grafikon samo za Admine (za sada, možemo ga kasnije upaliti i za organizatore) */}
+        {!isOrganizer && stats.monthlyRevenue && (
+          <div className="col-span-12 xl:col-span-8">
+            <Card className="shadow-sm border-slate-200 h-full">
+              <CardHeader>
+                <CardTitle>Pregled Zarade</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Overview data={stats.monthlyRevenue} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        {/* TOP LISTA (Zauzima 3 stupca od 7) */}
-        <Card className="col-span-3 shadow-sm border-slate-200">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
-              Najprodavaniji Događaji
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 flex flex-col items-center">
-              {/* Centriranje liste */}
-              <div className="w-full">
-                {stats.topSellingEvents.map((event: any, i: number) => (
+        {/* Top Događaji (Prilagođava se automatski) */}
+        <div
+          className={`col-span-12 ${isOrganizer ? "xl:col-span-12" : "xl:col-span-4"}`}
+        >
+          <Card className="shadow-sm border-slate-200 h-full">
+            <CardHeader>
+              <CardTitle>Top Događaji</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4">
+                {stats.topSellingEvents.map((event: any, key: number) => (
                   <div
-                    key={i}
-                    className="flex items-center justify-between p-4 mb-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors w-full"
+                    key={key}
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-50 transition"
                   >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`
-                        flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm shrink-0
-                        ${
-                          i === 0
-                            ? "bg-yellow-100 text-yellow-700"
-                            : i === 1
-                            ? "bg-gray-100 text-gray-700"
-                            : i === 2
-                            ? "bg-orange-100 text-orange-700"
-                            : "bg-slate-100 text-slate-600"
-                        }
-                      `}
-                      >
-                        #{i + 1}
-                      </div>
-                      <div className="font-semibold text-slate-800 line-clamp-1">
-                        {event.title}
-                      </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-bold">
+                      #{key + 1}
                     </div>
-                    <Badge variant="secondary" className="ml-2 shrink-0">
-                      {event.totalTicketsSold}
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-black line-clamp-1">
+                        {event.title}
+                      </h4>
+                      <span className="text-xs font-medium text-slate-500">
+                        Prodano: {event.totalTicketsSold}
+                      </span>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="bg-emerald-100 text-emerald-700"
+                    >
+                      Top
                     </Badge>
                   </div>
                 ))}
+                {stats.topSellingEvents.length === 0 && (
+                  <p className="text-muted-foreground text-center py-4">
+                    Nema podataka.
+                  </p>
+                )}
               </div>
-
-              {stats.topSellingEvents.length === 0 && (
-                <div className="text-center py-10 text-muted-foreground">
-                  Još nema prodanih ulaznica.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
-  );
-}
-
-function StatsCard({ title, value, desc, icon: Icon, color, bg }: any) {
-  return (
-    <Card className="shadow-sm border-slate-200 overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className={`p-2 rounded-full ${bg} ${color}`}>
-          <Icon className="h-4 w-4" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-slate-900">{value}</div>
-        <p className="text-xs text-muted-foreground mt-1">{desc}</p>
-      </CardContent>
-    </Card>
   );
 }

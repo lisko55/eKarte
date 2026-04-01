@@ -19,6 +19,17 @@ import { useRouter } from "next/navigation";
 import { Loader2, User, Mail, Phone, Lock, Save, Wallet } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { requestPayout } from "@/actions/payout-actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Banknote } from "lucide-react";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -94,20 +105,81 @@ export default function ProfilePage() {
           </div>
 
           {/* --- NOVA WALLET KARTICA --- */}
-          <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-lg flex items-center gap-4 min-w-[250px]">
-            <div className="bg-white/20 p-3 rounded-full">
-              <Wallet className="w-6 h-6 text-white" />
+          <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-lg flex items-center justify-between gap-6 min-w-[300px]">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-3 rounded-full">
+                <Wallet className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-emerald-100 uppercase font-semibold tracking-wider">
+                  Moj Kredit
+                </p>
+                <p className="text-2xl font-bold">{balance.toFixed(2)} KM</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-emerald-100 uppercase font-semibold tracking-wider">
-                Moj Kredit
-              </p>
-              <p className="text-2xl font-bold">{balance.toFixed(2)} KM</p>
-            </div>
-          </div>
-          {/* --------------------------- */}
-        </div>
 
+            {/* DUGME ZA ISPLATU */}
+            {balance > 0 && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white text-emerald-700 hover:bg-emerald-50 shadow-sm"
+                  >
+                    <Banknote className="w-4 h-4 mr-2" /> Isplati
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Zatraži isplatu na račun</DialogTitle>
+                    <DialogDescription>
+                      Unesite vaš IBAN. Novac će biti uplaćen na vaš račun u
+                      roku od 2-3 radna dana. Maksimalan iznos:{" "}
+                      {balance.toFixed(2)} KM.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form
+                    action={async (formData) => {
+                      const res = await requestPayout(formData);
+                      if (res.error) toast.error(res.error);
+                      else {
+                        toast.success("Zahtjev poslan!");
+                        getUserBalance().then((bal) => setBalance(bal)); // Osveži UI
+                      }
+                    }}
+                    className="space-y-4 py-4"
+                  >
+                    <div className="space-y-2">
+                      <Label>Iznos za isplatu (KM)</Label>
+                      <Input
+                        type="number"
+                        name="amount"
+                        max={balance}
+                        step="0.01"
+                        required
+                        defaultValue={balance}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Vaš IBAN broj</Label>
+                      <Input name="iban" required placeholder="BA39..." />
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        type="submit"
+                        className="bg-emerald-600 hover:bg-emerald-700 w-full"
+                      >
+                        Pošalji zahtjev
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </div>
+        {/* --- KRAJ WALLET KARTICE --- */}
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* LIJEVI STUPAC - KARTICA KORISNIKA */}

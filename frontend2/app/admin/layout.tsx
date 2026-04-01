@@ -9,11 +9,19 @@ import {
   Banknote,
   Menu,
   ScanBarcode,
+  Briefcase,
+  UserCog,
 } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // <--- NOVO
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden"; // Za sakrivanje naslova na mobitelu
 
 export default async function AdminLayout({
   children,
@@ -22,17 +30,31 @@ export default async function AdminLayout({
 }) {
   const session = await getSession();
 
-  if (!session || !session.isAdmin) redirect("/");
+  // --- 1. PROVJERA PRISTUPA ---
+  const isAllowed =
+    session &&
+    (session.isAdmin ||
+      session.role === "scanner" ||
+      session.role === "organizer");
+  if (!isAllowed) redirect("/");
 
-  const userName = (session.name as string) || "Admin";
+  // --- POPRAVAK: Definirali smo userEmail ---
+  const userName = (session.name as string) || "Korisnik";
   const userEmail = (session.email as string) || "";
+  const userRole = session.role as string;
 
-  // Izdvojeni sadržaj sidebara da ga možemo koristiti i za Desktop i za Mobile
+  const isScannerOnly = userRole === "scanner";
+  const isOrganizer = userRole === "organizer";
+
   const SidebarContent = () => (
-    <div className="flex flex-col h-full text-white">
+    <div className="flex flex-col h-full text-white bg-[#0f172a]">
       <div className="p-6 pb-2">
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2 mb-4 text-white">
-          🛡️ Admin
+        <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2 mb-4">
+          {isScannerOnly
+            ? "📱 Skener"
+            : isOrganizer
+              ? "🏢 Partner"
+              : "🛡️ Admin"}
         </h2>
         <Button
           variant="secondary"
@@ -45,23 +67,64 @@ export default async function AdminLayout({
         </Button>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2 mt-6">
+      <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
         <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
           Izbornik
         </p>
-        <SidebarLink
-          href="/admin/dashboard"
-          icon={LayoutDashboard}
-          label="Pregled"
-        />
-        <SidebarLink href="/admin/revenue" icon={Banknote} label="Prihodi" />
-        <SidebarLink href="/admin/userlist" icon={Users} label="Korisnici" />
-        <SidebarLink href="/admin/eventlist" icon={Calendar} label="Događaji" />
-        <SidebarLink
-          href="/admin/orderlist"
-          icon={ShoppingBag}
-          label="Narudžbe"
-        />
+
+        {!isScannerOnly && (
+          <>
+            <SidebarLink
+              href="/admin/dashboard"
+              icon={LayoutDashboard}
+              label="Pregled"
+            />
+            <SidebarLink
+              href="/admin/eventlist"
+              icon={Calendar}
+              label="Događaji"
+            />
+          </>
+        )}
+
+        {isOrganizer && (
+          <SidebarLink
+            href="/admin/scanners"
+            icon={UserCog}
+            label="Obezbjeđenje"
+          />
+        )}
+
+        {(session?.isAdmin as boolean) && (
+          <>
+            <SidebarLink
+              href="/admin/revenue"
+              icon={Banknote}
+              label="Prihodi (Global)"
+            />
+            <SidebarLink
+              href="/admin/userlist"
+              icon={Users}
+              label="Korisnici"
+            />
+            <SidebarLink
+              href="/admin/orderlist"
+              icon={ShoppingBag}
+              label="Sve Narudžbe"
+            />
+            <SidebarLink
+              href="/admin/payouts"
+              icon={Banknote}
+              label="Zahtjevi za Isplatu"
+            />
+            <SidebarLink
+              href="/admin/partners"
+              icon={Briefcase}
+              label="B2B Zahtjevi"
+            />
+          </>
+        )}
+
         <SidebarLink
           href="/admin/scanner"
           icon={ScanBarcode}
@@ -89,15 +152,17 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-slate-100/50">
-      {/* 1. DESKTOP SIDEBAR (Skriven na mobitelu) */}
+      {/* 1. DESKTOP SIDEBAR */}
       <aside className="w-64 bg-[#0f172a] hidden md:flex flex-col fixed inset-y-0 left-0 z-50">
         <SidebarContent />
       </aside>
 
-      {/* 2. MOBILNI HEADER (Vidljiv samo na mobitelu) */}
+      {/* 2. MOBILNI HEADER */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0f172a] z-50 flex items-center px-4 justify-between border-b border-slate-800">
         <h2 className="text-lg font-bold text-white">Admin Panel</h2>
-        <Sheet>
+
+        {/* --- POPRAVAK: modal={false} --- */}
+        <Sheet modal={false}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -111,13 +176,16 @@ export default async function AdminLayout({
             side="left"
             className="p-0 bg-[#0f172a] border-slate-800 w-[280px]"
           >
+            {/* --- POPRAVAK: Obavezni naslov za Screen Readere --- */}
+            <VisuallyHidden.Root>
+              <SheetTitle>Admin Izbornik</SheetTitle>
+            </VisuallyHidden.Root>
             <SidebarContent />
           </SheetContent>
         </Sheet>
       </div>
 
       {/* GLAVNI SADRŽAJ */}
-      {/* Na mobitelu dodajemo padding-top (pt-16) da header ne prekrije sadržaj */}
       <main className="flex-1 md:ml-64 p-4 md:p-8 min-h-screen pt-20 md:pt-8">
         <div className="max-w-6xl mx-auto">{children}</div>
       </main>

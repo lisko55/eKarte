@@ -10,6 +10,7 @@ import {
   MapPin,
   Phone,
   Ticket,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +69,14 @@ export default function Footer() {
               </li>
               <li>
                 <FooterLink href="/my-tickets">Prodaj Ulaznicu</FooterLink>
+              </li>
+              <li className="pt-2">
+                <Link
+                  href="/postani-partner"
+                  className="text-blue-400 font-semibold hover:text-blue-300 flex items-center gap-1 transition-colors"
+                >
+                  Postani Partner <ArrowRight className="w-3 h-3" />
+                </Link>
               </li>
             </ul>
           </div>

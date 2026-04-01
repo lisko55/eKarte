@@ -6,6 +6,7 @@ import User from "@/models/user";
 import EventModel from "@/models/event";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
+import Ticket from "@/models/ticket";
 // Helper za nazive mjeseci (bs-BA)
 function getBosnianMonthName(index: number) {
   return new Date(2024, index, 1).toLocaleString("bs-BA", { month: "long" });
@@ -29,18 +30,18 @@ export async function getDashboardStats() {
       newUsersThisMonth,
       activeEventCount,
       totalSalesData,
-      totalTicketsData
+      totalTicketsData,
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ createdAt: { $gte: firstDayOfMonth } }),
       EventModel.countDocuments({ date: { $gte: today } }),
       Order.aggregate([
-        { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+        { $group: { _id: null, total: { $sum: "$totalPrice" } } },
       ]),
       Order.aggregate([
         { $unwind: "$orderItems" },
-        { $group: { _id: null, total: { $sum: "$orderItems.quantity" } } }
-      ])
+        { $group: { _id: null, total: { $sum: "$orderItems.quantity" } } },
+      ]),
     ]);
 
     // 2. Zarada po mjesecima
@@ -50,12 +51,12 @@ export async function getDashboardStats() {
         $group: {
           _id: {
             month: { $month: "$createdAt" },
-            year: { $year: "$createdAt" }
+            year: { $year: "$createdAt" },
           },
-          total: { $sum: "$totalPrice" }
-        }
+          total: { $sum: "$totalPrice" },
+        },
       },
-      { $sort: { "_id.year": 1, "_id.month": 1 } }
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
 
     const monthlyRevenue = monthlyRevenueRaw.map((item) => {
@@ -64,7 +65,7 @@ export async function getDashboardStats() {
 
       return {
         name: date.toLocaleString("bs-BA", { month: "short" }),
-        total: item.total
+        total: item.total,
       };
     });
 
@@ -74,8 +75,8 @@ export async function getDashboardStats() {
       {
         $group: {
           _id: "$orderItems.event",
-          totalTicketsSold: { $sum: "$orderItems.quantity" }
-        }
+          totalTicketsSold: { $sum: "$orderItems.quantity" },
+        },
       },
       { $sort: { totalTicketsSold: -1 } },
       { $limit: 5 },
@@ -84,16 +85,16 @@ export async function getDashboardStats() {
           from: "events",
           localField: "_id",
           foreignField: "_id",
-          as: "eventDetails"
-        }
+          as: "eventDetails",
+        },
       },
       { $unwind: "$eventDetails" },
       {
         $project: {
           title: "$eventDetails.title",
-          totalTicketsSold: 1
-        }
-      }
+          totalTicketsSold: 1,
+        },
+      },
     ]);
 
     const totalSales = totalSalesData.length > 0 ? totalSalesData[0].total : 0;
@@ -107,7 +108,7 @@ export async function getDashboardStats() {
       totalSales,
       totalTickets,
       topSellingEvents,
-      monthlyRevenue
+      monthlyRevenue,
     };
   } catch (error) {
     console.error("Greška u dashboard stats:", error);
@@ -144,10 +145,10 @@ export async function getRevenueAnalytics(year: number, month?: number) {
       {
         $match: {
           isPaid: true,
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
       },
-      { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+      { $group: { _id: null, total: { $sum: "$totalPrice" } } },
     ]);
 
     const totalRevenue =
@@ -162,24 +163,24 @@ export async function getRevenueAnalytics(year: number, month?: number) {
         {
           $match: {
             isPaid: true,
-            createdAt: { $gte: startDate, $lte: endDate }
-          }
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
         },
         {
           $group: {
             _id: { day: { $dayOfMonth: "$createdAt" } },
-            total: { $sum: "$totalPrice" }
-          }
+            total: { $sum: "$totalPrice" },
+          },
         },
-        { $sort: { "_id.day": 1 } }
+        { $sort: { "_id.day": 1 } },
       ]);
 
       return {
         totalRevenue,
         chartData: chartDataRaw.map((item) => ({
           name: `${item._id.day}.`,
-          total: item.total
-        }))
+          total: item.total,
+        })),
       };
     }
 
@@ -188,16 +189,16 @@ export async function getRevenueAnalytics(year: number, month?: number) {
       {
         $match: {
           isPaid: true,
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
       },
       {
         $group: {
           _id: { month: { $month: "$createdAt" } },
-          total: { $sum: "$totalPrice" }
-        }
+          total: { $sum: "$totalPrice" },
+        },
       },
-      { $sort: { "_id.month": 1 } }
+      { $sort: { "_id.month": 1 } },
     ]);
 
     // Popunjavanje svih mjeseci
@@ -205,13 +206,13 @@ export async function getRevenueAnalytics(year: number, month?: number) {
       const found = chartDataRaw.find((item) => item._id.month === i + 1);
       return {
         name: getBosnianMonthName(i),
-        total: found ? found.total : 0
+        total: found ? found.total : 0,
       };
     });
 
     return {
       totalRevenue,
-      chartData: fullYearData
+      chartData: fullYearData,
     };
   } catch (error) {
     console.error("Greška u revenue analytics:", error);
@@ -222,7 +223,8 @@ export async function getAllUsers(query: string = "", page: number = 1) {
   try {
     await connectDB();
     const session = await getSession();
-    if (!session || !session.isAdmin) return { users: [], totalPages: 0, currentUserRole: "user" };
+    if (!session || !session.isAdmin)
+      return { users: [], totalPages: 0, currentUserRole: "user" };
 
     const pageSize = 10;
     const skip = (page - 1) * pageSize;
@@ -231,7 +233,7 @@ export async function getAllUsers(query: string = "", page: number = 1) {
     if (query) {
       filter.$or = [
         { name: { $regex: query, $options: "i" } },
-        { email: { $regex: query, $options: "i" } }
+        { email: { $regex: query, $options: "i" } },
       ];
     }
 
@@ -267,18 +269,18 @@ export async function searchUsersPreview(query: string) {
     const users = await User.find({
       $or: [
         { name: { $regex: query, $options: "i" } },
-        { email: { $regex: query, $options: "i" } }
-      ]
+        { email: { $regex: query, $options: "i" } },
+      ],
     })
-    .select("name lastName email") // Samo osnovno
-    .limit(5) // Max 5 rezultata u dropdownu
-    .lean();
+      .select("name lastName email") // Samo osnovno
+      .limit(5) // Max 5 rezultata u dropdownu
+      .lean();
 
     return users.map((u: any) => ({
       _id: u._id.toString(),
       name: u.name,
       lastName: u.lastName,
-      email: u.email
+      email: u.email,
     }));
   } catch (error) {
     return [];
@@ -290,9 +292,9 @@ export async function toggleUserRole(userId: string, currentRole: string) {
   try {
     await connectDB();
     const session = await getSession();
-    
+
     // PROVJERA: Samo SUPERADMIN može ovo raditi
-    if (!session || session.role !== "superadmin") { 
+    if (!session || session.role !== "superadmin") {
       return { error: "Samo SuperAdmin može mijenjati uloge!" };
     }
 
@@ -315,38 +317,57 @@ export async function toggleUserRole(userId: string, currentRole: string) {
 
 // ... (deleteUser ostaje sličan, ali dodaj provjeru za superadmina ako želiš) ...
 export async function deleteUser(userId: string) {
-    try {
-      await connectDB();
-      const session = await getSession();
-      // Dozvoljavamo brisanje adminu, ali ne brisanje drugog admina (osim ako si superadmin)
-      // Radi jednostavnosti ovdje:
-      if (!session || !session.isAdmin) return { error: "Nije dozvoljeno" };
-  
-      await User.findByIdAndDelete(userId);
-      revalidatePath("/admin/userlist");
-      return { success: true };
-    } catch (error) {
-      return { error: "Greška pri brisanju" };
-    }
+  try {
+    await connectDB();
+    const session = await getSession();
+    // Dozvoljavamo brisanje adminu, ali ne brisanje drugog admina (osim ako si superadmin)
+    // Radi jednostavnosti ovdje:
+    if (!session || !session.isAdmin) return { error: "Nije dozvoljeno" };
+
+    await User.findByIdAndDelete(userId);
+    revalidatePath("/admin/userlist");
+    return { success: true };
+  } catch (error) {
+    return { error: "Greška pri brisanju" };
   }
-  // --- BRISANJE DOGAĐAJA ---
+}
+// --- BRISANJE DOGAĐAJA ---
 export async function deleteEvent(eventId: string) {
   try {
     await connectDB();
     const session = await getSession();
-    if (!session || !session.isAdmin) return { error: "Nije dozvoljeno" };
 
-    // Provjera postoje li narudžbe za ovaj event
-    // (Opcionalno: Možda ne želiš brisati event ako su ljudi već kupili karte)
-    const existingOrders = await Order.findOne({ "orderItems.event": eventId });
-    if (existingOrders) {
-      return { error: "Ne možete obrisati događaj za koji postoje narudžbe!" };
+    if (!session || (!session.isAdmin && session.role !== "organizer")) {
+      return { error: "Nije dozvoljeno" };
     }
 
+    const event = await EventModel.findById(eventId);
+    if (!event) return { error: "Događaj nije pronađen." };
+
+    // 1. SIGURNOSNA PROVJERA VLASNIŠTVA
+    // Ako si organizator, možeš brisati SAMO svoje događaje
+    if (
+      session.role === "organizer" &&
+      event.organizer?.toString() !== session.userId
+    ) {
+      return { error: "Nemate pravo obrisati tuđi događaj!" };
+    }
+
+    // 2. SIGURNOSNA PROVJERA PRODAJE (Najbitnije!)
+    // Provjeravamo da li postoji barem jedna kupljena karta za ovaj događaj
+    const soldTickets = await Ticket.countDocuments({ event: eventId });
+
+    if (soldTickets > 0) {
+      return {
+        error: `Nije moguće obrisati! Već je prodano ${soldTickets} ulaznica. Kontaktirajte glavnog administratora za otkazivanje i refundaciju.`,
+      };
+    }
+
+    // 3. Ako je sve čisto, brišemo
     await EventModel.findByIdAndDelete(eventId);
-    
+
     revalidatePath("/admin/eventlist");
-    revalidatePath("/"); // Osvježi i naslovnu
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     return { error: "Greška pri brisanju događaja" };
