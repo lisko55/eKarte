@@ -496,3 +496,62 @@ export async function issueFreeTicket(formData: FormData) {
     return { error: error.message };
   }
 }
+export async function transferTicket(ticketId: string, receiverEmail: string) {
+  try {
+    await connectDB();
+    const session = await getSession();
+    if (!session || !session.userId) return { error: "Niste prijavljeni." };
+
+    const ticket = await Ticket.findById(ticketId);
+
+    if (!ticket) return { error: "Karta nije pronađena." };
+    if (ticket.owner.toString() !== session.userId)
+      return { error: "Niste vlasnik ove karte." };
+    if (ticket.status !== "valid")
+      return { error: "Ova karta se trenutno ne može poslati." };
+
+    // 1. Pronađi prijatelja u bazi po emailu
+    const receiverEmailLower = receiverEmail.toLowerCase().trim();
+    const receiver = await User.findOne({ email: receiverEmailLower });
+
+    if (!receiver) {
+      return {
+        error:
+          "Korisnik sa ovim emailom ne postoji. Zamolite prijatelja da besplatno kreira račun na eKarte, a zatim ponovite slanje.",
+      };
+    }
+
+    if (receiver._id.toString() === session.userId) {
+      return { error: "Ne možete poslati ulaznicu sami sebi." };
+    }
+
+    // 2. Transfer vlasništva i novi ključ
+    const newSecret = generateSecret();
+
+    ticket.owner = receiver._id;
+    ticket.secretKey = newSecret;
+    // Ostavljamo isti status ('valid') i istu purchasePrice
+
+    // Dodajemo u historiju
+    ticket.history.push({
+      action: "transferred",
+      fromUser: session.userId,
+      toUser: receiver._id,
+      date: new Date(),
+      price: 0, // Transfer je besplatan (poklon)
+    });
+
+    await ticket.save();
+
+    // 3. Opcionalno: Ovdje bi mogao pozvati sendMail funkciju da obavijestiš prijatelja
+    // "Hej, dobili ste ulaznicu od [Ime]!"
+
+    revalidatePath("/my-tickets");
+    revalidatePath(`/ticket/${ticketId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Greška pri transferu:", error);
+    return { error: "Sistemska greška pri slanju ulaznice." };
+  }
+}

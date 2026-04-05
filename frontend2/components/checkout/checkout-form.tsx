@@ -16,9 +16,11 @@ import { Loader2, Lock } from "lucide-react";
 export default function CheckoutForm({
   totalPrice,
   useCredit,
+  serviceFee,
 }: {
   totalPrice: number;
   useCredit: boolean;
+  serviceFee: number;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -67,7 +69,7 @@ export default function CheckoutForm({
           router.push(`/order-success?orderId=${res.orderId}`);
         } else {
           toast.error(
-            "Plaćanje je prošlo, ali narudžba nije spremljena: " + res.error
+            "Plaćanje je prošlo, ali narudžba nije spremljena: " + res.error,
           );
         }
       } catch (err) {

@@ -15,9 +15,50 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { Metadata } from "next";
 
 interface EventPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata(
+  props: EventPageProps,
+): Promise<Metadata> {
+  const params = await props.params;
+  const event = await getEventById(params.id);
+
+  if (!event) {
+    return {
+      title: "Događaj nije pronađen | eKarte",
+    };
+  }
+
+  return {
+    title: `${event.title} | eKarte`,
+    description: event.description.substring(0, 150) + "...", // Prvih 150 karaktera
+    openGraph: {
+      title: `${event.title} - Ulaznice`,
+      description: event.description.substring(0, 150) + "...",
+      url: `https://e-karte.vercel.app/event/${event._id}`,
+      siteName: "eKarte",
+      images: [
+        {
+          url: event.image, // Slika sa UploadThinga!
+          width: 1200,
+          height: 630,
+          alt: event.title,
+        },
+      ],
+      locale: "bs_BA",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: event.title,
+      description: event.description.substring(0, 150) + "...",
+      images: [event.image],
+    },
+  };
 }
 
 export default async function EventDetailPage(props: EventPageProps) {
